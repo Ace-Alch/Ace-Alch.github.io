@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" role="img" aria-labelledby="title desc">
+<title id="title">Derafsh Kaviani — Gold Liquid Glass</title>
+<desc id="desc">An original vector interpretation of the supplied Derafsh Kaviani emblem. Four raised gold glass leaves, four gold droplets, a twelve-petal flower and an aqua-tinted faceted diamond. Translucent violet light surrounds the relief. The canvas is fully transparent. Reflections are drawn vector artwork; live backdrop refraction requires host integration.</desc>
+<defs>
+ <linearGradient id="gold" x1="-.1" y1="0" x2=".95" y2="1" gradientUnits="objectBoundingBox">
+  <stop stop-color="#fff7d6" stop-opacity=".92"/><stop offset=".16" stop-color="#ffe9a0" stop-opacity=".63"/><stop offset=".36" stop-color="#eebf46" stop-opacity=".27"/><stop offset=".58" stop-color="#ffdc70" stop-opacity=".16"/><stop offset=".8" stop-color="#d99a1f" stop-opacity=".54"/><stop offset="1" stop-color="#fff1b6" stop-opacity=".85"/>
+ </linearGradient>
+ <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffdef"/><stop offset=".2" stop-color="#ffebaa"/><stop offset=".43" stop-color="#be861b" stop-opacity=".72"/><stop offset=".63" stop-color="#fff2b2"/><stop offset=".84" stop-color="#b87716"/><stop offset="1" stop-color="#ffe7a1"/></linearGradient>
+ <linearGradient id="shine" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffffff" stop-opacity=".98"/><stop offset=".48" stop-color="#fff7d5" stop-opacity=".4"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffbea" stop-opacity=".05"/><stop offset=".58" stop-color="#efc14f" stop-opacity=".1"/><stop offset=".88" stop-color="#fff4bf" stop-opacity=".96"/><stop offset="1" stop-color="#fff" stop-opacity=".5"/></linearGradient>
+ <radialGradient id="orb" cx=".31" cy=".22" r=".84"><stop stop-color="#fffde6" stop-opacity=".94"/><stop offset=".25" stop-color="#ffe69b" stop-opacity=".55"/><stop offset=".54" stop-color="#f7ce5b" stop-opacity=".19"/><stop offset=".8" stop-color="#c28a21" stop-opacity=".6"/><stop offset=".93" stop-color="#ffdf82" stop-opacity=".9"/><stop offset="1" stop-color="#ffefb9" stop-opacity=".6"/></radialGradient>
+ <radialGradient id="violet"><stop stop-color="#a257ed" stop-opacity=".18"/><stop offset=".45" stop-color="#8139c6" stop-opacity=".12"/><stop offset="1" stop-color="#7130b8" stop-opacity="0"/></radialGradient>
+ <linearGradient id="gem" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#edffff" stop-opacity=".96"/><stop offset=".3" stop-color="#9de9ec" stop-opacity=".68"/><stop offset=".58" stop-color="#49acba" stop-opacity=".46"/><stop offset="1" stop-color="#e2ffff" stop-opacity=".9"/></linearGradient>
+ <filter id="aura" x="-.6" y="-.6" width="2.2" height="2.2" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="shadow" x="-.5" y="-.5" width="2" height="2" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="8" result="blur"/><feOffset in="blur" dy="9" result="offset"/><feFlood flood-color="#4e217b" flood-opacity=".38"/><feComposite in2="offset" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <path id="leaf-shape" d="M 0,-118 C -43,-147 -68,-226 -61,-304 C -57,-361 -21,-429 0,-450 C 21,-429 57,-361 61,-304 C 68,-226 43,-147 0,-118 Z"/>
+ <g id="leaf">
+  <use xlink:href="#leaf-shape" fill="#8d3cd7" opacity=".32" filter="url(#aura)"/>
+  <g filter="url(#shadow)">
+   <use xlink:href="#leaf-shape" transform="translate(0 5)" fill="none" stroke="#9e6b25" stroke-opacity=".55" stroke-width="6"/>
+   <use xlink:href="#leaf-shape" fill="url(#gold)" stroke="url(#rim)" stroke-width="3.5"/>
+   <path d="M -1,-431 C -27,-394 -49,-350 -50,-300 C -54,-232 -29,-167 -4,-137 C -26,-203 -30,-246 -25,-304 C -21,-359 -10,-400 -1,-431 Z" fill="url(#shine)" opacity=".67"/>
+   <path d="M 6,-429 C 37,-380 52,-338 52,-297 C 55,-231 33,-161 4,-134" stroke="url(#edge)" stroke-width="6" stroke-linecap="round"/>
+   <path d="M -2,-437 C -32,-397 -56,-344 -56,-299" stroke="#fffdf1" stroke-opacity=".86" stroke-width="2.4" stroke-linecap="round"/>
+   <path d="M 3,-415 C 18,-347 16,-235 0,-156" stroke="#fff0ad" stroke-opacity=".25" stroke-width="1.5"/>
+  </g>
+ </g>
+ <g id="droplet">
+  <circle r="48" fill="#8f40d9" opacity=".38" filter="url(#aura)"/>
+  <g filter="url(#shadow)"><circle cy="3" r="36" stroke="#b27b20" stroke-opacity=".55" stroke-width="4"/>
+   <circle r="36" fill="url(#orb)" stroke="url(#rim)" stroke-width="2.4"/>
+   <path d="M -28,0 A 28,28 0 0 1 12,-25" stroke="url(#shine)" stroke-width="4" stroke-linecap="round"/>
+   <path d="M -15,27 Q 16,39 29,9" stroke="#fff1bb" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>
+   <ellipse cx="-10" cy="-18" rx="11" ry="5" transform="rotate(-30 -10 -18)" fill="#fffef0" opacity=".65"/>
+  </g>
+ </g>
+ <g id="petal">
+  <path d="M 0,-31 C -14,-45 -26,-70 -19,-89 C -15,-103 -6,-112 0,-115 C 6,-112 15,-103 19,-89 C 26,-70 14,-45 0,-31 Z" fill="url(#gold)" stroke="url(#rim)" stroke-width="2"/>
+  <path d="M -2,-105 C -17,-90 -16,-73 -7,-55" stroke="url(#shine)" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M 4,-101 C 18,-84 14,-62 2,-42" stroke="url(#edge)" stroke-width="2.2"/>
+ </g>
+</defs>
+<!-- No background rectangle. Empty canvas pixels have zero alpha. -->
+<g id="purple-light"><ellipse cx="512" cy="522" rx="212" ry="211" fill="url(#violet)"/></g>
+<g id="four-gold-glass-leaves" transform="translate(512 512)">
+<use xlink:href="#leaf" transform="rotate(-45)"/>
+<use xlink:href="#leaf" transform="rotate(45)"/>
+<use xlink:href="#leaf" transform="rotate(135)"/>
+<use xlink:href="#leaf" transform="rotate(225)"/>
+</g><g id="four-gold-droplets">
+<use xlink:href="#droplet" transform="translate(512 274)"/>
+<use xlink:href="#droplet" transform="translate(750 512)"/>
+<use xlink:href="#droplet" transform="translate(512 750)"/>
+<use xlink:href="#droplet" transform="translate(274 512)"/>
+</g><g id="flower" transform="translate(512 512)" filter="url(#shadow)">
+<use xlink:href="#petal" transform="rotate(0)"/>
+<use xlink:href="#petal" transform="rotate(30)"/>
+<use xlink:href="#petal" transform="rotate(60)"/>
+<use xlink:href="#petal" transform="rotate(90)"/>
+<use xlink:href="#petal" transform="rotate(120)"/>
+<use xlink:href="#petal" transform="rotate(150)"/>
+<use xlink:href="#petal" transform="rotate(180)"/>
+<use xlink:href="#petal" transform="rotate(210)"/>
+<use xlink:href="#petal" transform="rotate(240)"/>
+<use xlink:href="#petal" transform="rotate(270)"/>
+<use xlink:href="#petal" transform="rotate(300)"/>
+<use xlink:href="#petal" transform="rotate(330)"/>
+<circle r="40" fill="url(#orb)" stroke="url(#rim)" stroke-width="3"/></g>
+<g id="faceted-diamond" transform="translate(512 512)">
+<polygon points="-13.39,-32.34 13.39,-32.34 32.34,-13.39 32.34,13.39 13.39,32.34 -13.39,32.34 -32.34,13.39 -32.34,-13.39" fill="url(#gem)" stroke="#e4ffff" stroke-opacity=".93" stroke-width="1.5"/>
+<polygon points="-13.39,-32.34 13.39,-32.34 7.27,-17.55 -7.27,-17.55" fill="#fff" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="13.39,-32.34 32.34,-13.39 17.55,-7.27 7.27,-17.55" fill="#e1ffff" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="32.34,-13.39 32.34,13.39 17.55,7.27 17.55,-7.27" fill="#76d1dd" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="32.34,13.39 13.39,32.34 7.27,17.55 17.55,7.27" fill="#18657e" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="13.39,32.34 -13.39,32.34 -7.27,17.55 7.27,17.55" fill="#3c94a6" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="-13.39,32.34 -32.34,13.39 -17.55,7.27 -7.27,17.55" fill="#bdf8ff" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="-32.34,13.39 -32.34,-13.39 -17.55,-7.27 -17.55,7.27" fill="#5eafc0" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="-32.34,-13.39 -13.39,-32.34 -7.27,-17.55 -17.55,-7.27" fill="#fff" fill-opacity=".58" stroke="#e5ffff" stroke-opacity=".28" stroke-width=".6"/>
+<polygon points="-7.27,-17.55 7.27,-17.55 17.55,-7.27 17.55,7.27 7.27,17.55 -7.27,17.55 -17.55,7.27 -17.55,-7.27" fill="url(#gem)" stroke="#e8ffff" stroke-opacity=".8" stroke-width="1"/>
+<path d="M -24,-19 L 16,20 L 25,9 L -10,-30 Z" fill="#fff" opacity=".22"/><path d="M -22,-26 v 14 M -29,-19 h 14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></g></svg>

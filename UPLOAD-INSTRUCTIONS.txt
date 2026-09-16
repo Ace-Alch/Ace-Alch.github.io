@@ -1,0 +1,27 @@
+GITHUB PAGES — READY-BUILT WEBSITE
+
+1. Extract the ZIP. Copy ALL its contents into your local repository root.
+   Replace existing files. Keep your existing .git folder.
+   index.html and the assets folder must be at the repository root.
+   Do not upload the ZIP itself or place its contents inside another folder.
+
+2. This package includes .github/workflows/deploy-pages.yml.
+   Replace the old file with this exact file. Keep only this website deployment
+   workflow active; disable any other old website build/deploy workflows.
+   The new workflow does not run npm or need source files.
+
+3. On GitHub: Settings > Pages > Source > GitHub Actions.
+
+4. Commit and push all files, including .github and .nojekyll:
+   git add -f .github .nojekyll
+   git add .
+   git commit -m "Fix static GitHub Pages deployment"
+   git push
+
+5. Open Actions > Deploy portfolio to GitHub Pages.
+   If this workflow was disabled before, enable it, then select Run workflow.
+   Wait for the deploy job to finish. Open https://ace-alch.github.io/
+
+No npm install or build command is needed.
+The website design and behavior are unchanged.
+If deployment fails, share the failed step and its error text.
