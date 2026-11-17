@@ -1,5 +1,5 @@
-import {models} from './models.js';
-import {workflowExamples} from './examples.js';
+import {models} from './models.js?v=2';
+import {workflowExamples} from './examples.js?v=2';
 
 const $ = id => document.getElementById(id);
 const slug = new URLSearchParams(location.search).get('project');
