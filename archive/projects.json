@@ -206,7 +206,8 @@
       "Mass properties",
       "Physical assembly checks"
     ],
-    "banner": "/banners/CAD_FPV_Drone.webp"
+    "banner": "/banners/CAD_FPV_Drone.webp",
+    "demo": "/apps/exhibits/fpv-assembly/"
   },
   {
     "slug": "dji-mavic-sim",
@@ -285,7 +286,8 @@
       "Oscilloscope measurements",
       "Timer range verification"
     ],
-    "banner": "/banners/Sounder.webp"
+    "banner": "/banners/Sounder.webp",
+    "demo": "/apps/exhibits/sounder/"
   },
   {
     "slug": "wireless-button-monitor",
@@ -366,7 +368,8 @@
       "Position limits",
       "Reproduced tuning measurements"
     ],
-    "banner": "/banners/PID_StepperMotor.webp"
+    "banner": "/banners/PID_StepperMotor.webp",
+    "demo": "/apps/exhibits/stepper/"
   },
   {
     "slug": "arduino-tft-volume-gauge",
@@ -624,7 +627,8 @@
       "Per-author contribution",
       "Repeatable speedup calculation"
     ],
-    "banner": "/banners/GPU-Accelerated-Satellite-Sim.webp"
+    "banner": "/banners/GPU-Accelerated-Satellite-Sim.webp",
+    "demo": "/apps/exhibits/satellite/"
   },
   {
     "slug": "Inertia-Control-Studio",
