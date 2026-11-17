@@ -39,7 +39,7 @@ export const models = {
     },
   },
   'dji-mavic-sim': {
-    context: 'A vertical flight model using Newton's second law, constant thrust and linear drag. The controls use illustrative values.',
+    context: 'A vertical flight model using Newtonian mechanics, constant thrust and linear drag. The controls use illustrative values.',
     axes: ['Time (s)', 'Altitude (m)'],
     inputs: [['Mass (kg)', .5, 1.3, .05, .75], ['Total thrust (N)', 4, 16, .2, 9.6], ['Linear drag (N�s/m)', 0, 2, .1, .4]],
     compute([mass, thrust, drag]) {
@@ -73,7 +73,7 @@ export const models = {
     },
   },
   'tinnitus-audio-anc-concept': {
-    context: 'An illustrative signal model for interference at one point. Compare the original wave and the sum after you adjust the second wave's phase and amplitude.',
+    context: 'An illustrative signal model for interference at one point. Compare the original wave and the sum after you adjust the phase of the second wave and amplitude.',
     axes: ['Time (ms)', 'Amplitude'],
     inputs: [['Frequency (Hz)', 100, 800, 20, 300], ['Phase difference (deg)', 0, 360, 5, 160], ['Second wave amplitude', 0, 1.5, .05, 1]],
     compute([frequency, phase, amplitude]) {
