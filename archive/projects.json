@@ -48,7 +48,8 @@
       "Sensor and driver models",
       "Wiring and firmware",
       "Measured sorting results"
-    ]
+    ],
+    "banner": "/banners/automated-sorting-conveyor.webp"
   },
   {
     "slug": "adjustable-conveyor-fixture",
@@ -178,7 +179,8 @@
       "Wiring and firmware",
       "Test environment",
       "Flight and inspection evidence"
-    ]
+    ],
+    "banner": "/banners/smart-uav-inspection.webp"
   },
   {
     "slug": "CAD_FPV_Drone",
@@ -254,7 +256,8 @@
       "Transition guards",
       "Image input assumptions",
       "Run logs and simulator dependencies"
-    ]
+    ],
+    "banner": "/banners/drone-stateflow-experiment.webp"
   },
   {
     "slug": "Sounder",
@@ -306,7 +309,8 @@
       "Schematic and PCB",
       "Debounce logic",
       "Battery thresholds and current draw"
-    ]
+    ],
+    "banner": "/banners/wireless-button-monitor.webp"
   },
   {
     "slug": "LED-Matrix-Game",
@@ -360,7 +364,8 @@
       "Current and thermal checks",
       "Position limits",
       "Reproduced tuning measurements"
-    ]
+    ],
+    "banner": "/banners/PID_StepperMotor.webp"
   },
   {
     "slug": "arduino-tft-volume-gauge",
@@ -385,7 +390,8 @@
       "SPI pin map",
       "Graphics library versions",
       "Source sketch and display photos"
-    ]
+    ],
+    "banner": "/banners/arduino-tft-volume-gauge.webp"
   },
   {
     "slug": "mkr-fox-sigfox-demo",
@@ -409,7 +415,8 @@
       "Region and coverage",
       "Board registration steps",
       "Redacted message evidence"
-    ]
+    ],
+    "banner": "/banners/mkr-fox-sigfox-demo.webp"
   },
   {
     "slug": "esp32-c3-rust-rtic",
@@ -639,7 +646,8 @@
       "Independent hardware validation",
       "Browser and GPU coverage",
       "Measured plant calibration"
-    ]
+    ],
+    "banner": "/banners/Inertia-Control-Studio.webp"
   },
   {
     "slug": "roadcast",
