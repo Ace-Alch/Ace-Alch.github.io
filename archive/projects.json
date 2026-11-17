@@ -22,7 +22,8 @@
       "Train and test split",
       "K and distance metric",
       "Confusion matrix and participant counts"
-    ]
+    ],
+    "banner": "/banners/nasir-driving-simulator.webp"
   },
   {
     "slug": "automated-sorting-conveyor",
@@ -72,7 +73,8 @@
       "Adjustment limits",
       "Calibration method",
       "Timing measurements"
-    ]
+    ],
+    "banner": "/banners/adjustable-conveyor-fixture.webp"
   },
   {
     "slug": "SoftWareTesting",
@@ -121,7 +123,8 @@
       "Materials and dimensions",
       "Mesh convergence",
       "Sensitivity and operating range"
-    ]
+    ],
+    "banner": "/banners/mems-force-sensor.webp"
   },
   {
     "slug": "smart-hospital-bed",
@@ -148,7 +151,8 @@
       "Pin map and wiring",
       "Firmware and Node-RED flows",
       "Calibration and bench results"
-    ]
+    ],
+    "banner": "/banners/smart-hospital-bed.webp"
   },
   {
     "slug": "smart-uav-inspection",
@@ -198,7 +202,8 @@
       "Materials and fasteners",
       "Mass properties",
       "Physical assembly checks"
-    ]
+    ],
+    "banner": "/banners/CAD_FPV_Drone.webp"
   },
   {
     "slug": "dji-mavic-sim",
@@ -223,7 +228,8 @@
       "Parameter initialization",
       "Reproducible scenario",
       "Validation against measured flight data"
-    ]
+    ],
+    "banner": "/banners/dji-mavic-sim.webp"
   },
   {
     "slug": "drone-stateflow-experiment",
@@ -274,7 +280,8 @@
       "BOM and board revision",
       "Oscilloscope measurements",
       "Timer range verification"
-    ]
+    ],
+    "banner": "/banners/Sounder.webp"
   },
   {
     "slug": "wireless-button-monitor",
@@ -326,7 +333,8 @@
       "Matrix wiring and supply",
       "SDK release",
       "Reproduced board test"
-    ]
+    ],
+    "banner": "/banners/LED-Matrix-Game.webp"
   },
   {
     "slug": "PID_StepperMotor",
@@ -605,7 +613,8 @@
       "Exact build and hardware settings",
       "Per-author contribution",
       "Repeatable speedup calculation"
-    ]
+    ],
+    "banner": "/banners/GPU-Accelerated-Satellite-Sim.webp"
   },
   {
     "slug": "Inertia-Control-Studio",

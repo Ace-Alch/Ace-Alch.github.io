@@ -1,0 +1,6 @@
+.story-visual.shared-banner{aspect-ratio:auto;height:auto;min-height:0;max-height:none;background:#080d19}
+.story-visual.shared-banner img{position:static;display:block;width:100%;height:auto;aspect-ratio:2.8;object-fit:contain;max-height:none}
+.original-artifact{max-width:1200px;margin:20px auto 50px;padding:0 24px;color:inherit}
+.original-artifact summary{cursor:pointer;font-size:14px;padding:16px 0}
+.original-artifact summary:focus-visible{outline:2px solid #67e8f9;outline-offset:5px}
+.original-artifact .story-visual{margin-top:15px}
