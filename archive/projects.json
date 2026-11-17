@@ -153,7 +153,8 @@
       "Firmware and Node-RED flows",
       "Calibration and bench results"
     ],
-    "banner": "/banners/smart-hospital-bed.webp"
+    "banner": "/banners/smart-hospital-bed.webp",
+    "demo": "/projects/smart-hospital-bed/demo/"
   },
   {
     "slug": "smart-uav-inspection",
@@ -541,7 +542,8 @@
       "MATLAB release and initialization",
       "Final scenario logs",
       "Lab prototype scope"
-    ]
+    ],
+    "demo": "/projects/cybercity/demo/"
   },
   {
     "slug": "cybercity-sensing-communications",
@@ -594,7 +596,8 @@
       "Component parameters",
       "Conversion assumptions",
       "Power-balance comparison"
-    ]
+    ],
+    "demo": "/projects/urban-grid/demo/"
   },
   {
     "slug": "GPU-Accelerated-Satellite-Sim",
@@ -647,7 +650,8 @@
       "Browser and GPU coverage",
       "Measured plant calibration"
     ],
-    "banner": "/banners/Inertia-Control-Studio.webp"
+    "banner": "/banners/Inertia-Control-Studio.webp",
+    "demo": "/apps/inertia-lab/"
   },
   {
     "slug": "roadcast",
@@ -1272,5 +1276,57 @@
       "Cost assumptions",
       "Research report"
     ]
+  },
+  {
+    "slug": "circuit-lab",
+    "title": "Circuit Lab",
+    "purpose": "Wire components and run code in an interactive circuit workbench.",
+    "stack": [
+      "Electronics",
+      "Embedded code"
+    ],
+    "category": "Engineering",
+    "status": "Interactive demo",
+    "details": "/projects/circuit-lab/info/",
+    "demo": "/apps/circuit-lab/"
+  },
+  {
+    "slug": "microgrid-prototype",
+    "title": "Microgrid Prototype",
+    "purpose": "Explore the sensing, switching and connections in the hardware concept.",
+    "stack": [
+      "Power electronics",
+      "Instrumentation"
+    ],
+    "category": "Engineering",
+    "status": "Interactive demo",
+    "details": "/projects/microgrid-prototype/info/",
+    "demo": "/projects/microgrid-prototype/demo/"
+  },
+  {
+    "slug": "bluetooth-hid",
+    "title": "Bluetooth HID Proxy",
+    "purpose": "Explore how an embedded Linux device bridges USB input to Bluetooth.",
+    "stack": [
+      "Embedded Linux",
+      "Bluetooth"
+    ],
+    "category": "Engineering",
+    "status": "Interactive demo",
+    "details": "/projects/bluetooth-hid/info/",
+    "demo": "/projects/bluetooth-hid/demo/"
+  },
+  {
+    "slug": "telegram-bot",
+    "title": "Telegram Relay",
+    "purpose": "Filter, queue and relay messages through a Telegram automation demo.",
+    "stack": [
+      "Telegram",
+      "Automation"
+    ],
+    "category": "Software",
+    "status": "Interactive demo",
+    "details": "/projects/telegram-bot/info/",
+    "demo": "/projects/telegram-bot/demo/"
   }
 ]

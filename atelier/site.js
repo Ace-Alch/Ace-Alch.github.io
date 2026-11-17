@@ -15,7 +15,7 @@
   function draw(time){if(!ctx)return;ctx.clearRect(0,0,width,height);const t=time*.00004;
     for(let i=0;i<points.length;i++){const p=points[i],x=((Math.abs(p.x)*width+Math.sin(t+i)*12)%width),y=((Math.abs(p.y)*height+t*6*(1+i%3))%height);ctx.beginPath();ctx.arc(x,y,p.r,0,Math.PI*2);ctx.fillStyle=i%9===0?'#b1e7cf99':'#b5c8cf55';ctx.fill();if(i%5===0&&width>650){const q=points[(i+8)%points.length],qx=Math.abs(q.x)*width,qy=Math.abs(q.y)*height;if(Math.hypot(x-qx,y-qy)<width*.22){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(qx,qy);ctx.strokeStyle='#b1e7cf0c';ctx.lineWidth=.7;ctx.stroke();}}}}
   function animate(time){frame=0;if(paused||!visible)return;if(time-last>40){draw(time);last=time;}frame=requestAnimationFrame(animate);}
-  function syncMotion(){root.classList.toggle('motion-off',paused);if(toggle){toggle.textContent=paused?'▶ Motion off':'Ⅱ Pause motion';toggle.setAttribute('aria-pressed',String(paused));}if(frame)cancelAnimationFrame(frame);frame=0;if(!paused&&visible&&ctx)frame=requestAnimationFrame(animate);else draw(0);}
+  function syncMotion(){root.classList.toggle('motion-off',paused);if(toggle){toggle.textContent=paused?'? Motion off':'? Pause motion';toggle.setAttribute('aria-pressed',String(paused));}if(frame)cancelAnimationFrame(frame);frame=0;if(!paused&&visible&&ctx)frame=requestAnimationFrame(animate);else draw(0);}
   toggle?.addEventListener('click',()=>{paused=!paused;try{localStorage.setItem('mm-motion',paused?'paused':'running');}catch{}syncMotion();});
   media.addEventListener('change',()=>{paused=media.matches;syncMotion();});
   document.addEventListener('visibilitychange',()=>{visible=!document.hidden;syncMotion();});
@@ -30,4 +30,16 @@
   function filter(){let n=0;const q=search?.value.trim().toLowerCase()||'';for(const row of rows){const show=(category==='all'||row.dataset.category===category)&&row.dataset.search.includes(q);row.hidden=!show;if(show)n++;}if(count)count.textContent=String(n).padStart(2,'0')+' PROJECT'+(n===1?'':'S');if(empty)empty.hidden=n>0;}
   filters.forEach(button=>button.addEventListener('click',()=>{category=button.dataset.filter;filters.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));filter();}));search?.addEventListener('input',filter);
   const shortcutMap={'/':'[data-search]'};document.addEventListener('keydown',event=>{if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){const input=document.querySelector(shortcutMap['/']);if(input){event.preventDefault();input.focus();}}});
+})();
+
+(() => {
+  const match = location.pathname.match(/^\/work\/([^/]+)\/?$/);
+  const links = document.querySelector('.story-hero .story-links');
+  if (!match || !links) return;
+  const slug = decodeURIComponent(match[1]);
+  const link = document.createElement('a');
+  link.className = 'pill primary';
+  link.textContent = 'Open interactive demo';
+  link.href = '/apps/project-demo/?project=' + encodeURIComponent(slug);
+  links.prepend(link);
 })();

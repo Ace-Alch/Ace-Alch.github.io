@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Project demo | Mehdi Moallemkolaei</title>
+  <link rel="stylesheet" href="demo.css">
+  <script type="module" src="demo.js"></script>
+</head>
+<body>
+  <main>
+    <nav aria-label="Project navigation"><a href="/#projects">All projects</a><a id="details" hidden>Project details</a></nav>
+    <header>
+      <p class="type" id="type">Project demo</p>
+      <h1 id="title">Loading project.</h1>
+      <p id="purpose"></p>
+    </header>
+    <section id="lab" hidden aria-label="Interactive demonstration">
+      <div class="stage">
+        <img id="cover" alt="" hidden>
+        <canvas id="plot" hidden aria-label="Animated model trace"></canvas>
+        <div id="flow" hidden aria-label="Project steps"></div>
+      </div>
+      <div class="panel">
+        <p id="context"></p>
+        <div id="inputs"></div>
+        <div class="buttons">
+          <button id="play" type="button">Run</button>
+          <button id="step" type="button">Step</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+        <output id="result"></output>
+      </div>
+    </section>
+    <section id="evidence" hidden aria-labelledby="evidence-heading">
+      <h2 id="evidence-heading">What to verify</h2>
+      <ul id="gaps"></ul>
+    </section>
+  </main>
+</body>
+</html>

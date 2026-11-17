@@ -1,0 +1,32 @@
+:root{color-scheme:dark;--ink:#e8f1ff;--dim:#9eacc6;--line:#2a3552;--accent:#8be3ed;font-family:system-ui,sans-serif;background:#0b1020;color:var(--ink)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(ellipse at 80% 0,#1c3250,transparent 52rem)}
+main{max-width:1100px;margin:auto;padding:clamp(18px,5vw,66px)}
+nav{display:flex;flex-wrap:wrap;gap:20px}
+a{color:var(--accent)}
+header{margin:42px 0 24px}
+h1{font-size:clamp(2rem,6vw,4.3rem);line-height:1.08;letter-spacing:-.045em;margin:.25em 0}
+p,li{line-height:1.55;color:var(--dim)}
+.type{letter-spacing:.13em;text-transform:uppercase;font-size:.75rem;color:var(--accent)}
+#lab,#evidence{border:1px solid var(--line);border-radius:20px;background:#11192c;overflow:hidden}
+.stage{background:#090f1f}
+.stage img,.stage canvas{width:100%;display:block}
+.stage img{max-height:290px;object-fit:contain}
+.stage canvas{height:clamp(245px,40vw,470px)}
+.panel,#evidence{padding:clamp(16px,4vw,30px)}
+#evidence{margin-top:20px}
+#evidence h2{margin-top:0}
+#inputs,.buttons,#flow{display:flex;flex-wrap:wrap;gap:12px}
+#inputs label{display:grid;gap:5px;flex:1 1 180px}
+input{width:100%;accent-color:var(--accent)}
+#flow{padding:16px;justify-content:center}
+button{border:1px solid var(--line);border-radius:10px;padding:12px 16px;background:#192842;color:var(--ink);font:inherit;cursor:pointer}
+button[aria-current="step"],#play{background:var(--accent);color:#081120;border-color:transparent}
+:focus-visible{outline:2px solid #f6de9e;outline-offset:4px}
+.buttons{margin:18px 0}
+#result{display:block;min-height:2.8em;color:var(--accent);font-variant-numeric:tabular-nums}
+.example{margin-top:20px;padding:clamp(16px,4vw,30px);background:#11192c;border:1px solid var(--line);border-radius:20px}
+.example label{display:grid;gap:5px;margin:14px 0}
+.example input,.example textarea{font:inherit;padding:10px;color:inherit;background:#0b1020;border:1px solid var(--line);border-radius:8px}
+.example output{display:block;margin-top:14px;white-space:pre-line;color:var(--accent)}
