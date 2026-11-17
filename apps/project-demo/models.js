@@ -31,8 +31,8 @@ export const models = {
   },
   'mems-force-sensor': {
     context: 'Small-deflection Euler-Bernoulli model for a rectangular silicon cantilever. Compare tip deflection as you change load and thickness. The geometry is illustrative.',
-    axes: ['Load (mN)', 'Tip deflection (�m)'],
-    inputs: [['Maximum load (mN)', .01, .5, .01, .2], ['Length (mm)', .5, 2, .1, 1], ['Thickness (�m)', 15, 60, 1, 25]],
+    axes: ['Load (mN)', 'Tip deflection (?m)'],
+    inputs: [['Maximum load (mN)', .01, .5, .01, .2], ['Length (mm)', .5, 2, .1, 1], ['Thickness (?m)', 15, 60, 1, 25]],
     compute([load, length, thickness]) {
       const inertia = .0003 * (thickness * 1e-6) ** 3 / 12;
       return sample(load, force => [force * 1e-3 * (length * .001) ** 3 / (3 * 160e9 * inertia) * 1e6]);
@@ -41,7 +41,7 @@ export const models = {
   'dji-mavic-sim': {
     context: 'A vertical flight model using Newtonian mechanics, constant thrust and linear drag. The controls use illustrative values.',
     axes: ['Time (s)', 'Altitude (m)'],
-    inputs: [['Mass (kg)', .5, 1.3, .05, .75], ['Total thrust (N)', 4, 16, .2, 9.6], ['Linear drag (N�s/m)', 0, 2, .1, .4]],
+    inputs: [['Mass (kg)', .5, 1.3, .05, .75], ['Total thrust (N)', 4, 16, .2, 9.6], ['Linear drag (N?s/m)', 0, 2, .1, .4]],
     compute([mass, thrust, drag]) {
       let height = 0, speed = 0;
       const points = [];
@@ -100,7 +100,7 @@ export const models = {
     },
   },
   'automated-sorting-conveyor': {
-    context: 'A constant-speed conveyor with a detection point and downstream sorter. Set the actuation delay to align it with the object's arrival.',
+    context: 'A constant-speed conveyor with a detection point and downstream sorter. Set the actuation delay to align it with the arrival of the object.',
     axes: ['Time (s)', 'Position (m)'],
     inputs: [['Sensor-to-sorter distance (m)', .2, 2, .1, 1], ['Belt speed (m/s)', .1, 1, .05, .5], ['Actuation delay (s)', .1, 4, .1, 1.5]],
     compute([distance, speed, delay]) {
