@@ -32,14 +32,79 @@
   const shortcutMap={'/':'[data-search]'};document.addEventListener('keydown',event=>{if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){const input=document.querySelector(shortcutMap['/']);if(input){event.preventDefault();input.focus();}}});
 })();
 
+
 (() => {
   const match = location.pathname.match(/^\/work\/([^/]+)\/?$/);
-  const links = document.querySelector('.story-hero .story-links');
-  if (!match || !links) return;
-  const slug = decodeURIComponent(match[1]);
-  const link = document.createElement('a');
-  link.className = 'pill primary';
-  link.textContent = 'Open interactive demo';
-  link.href = '/apps/project-demo/?project=' + encodeURIComponent(slug);
-  links.prepend(link);
+  const hero = document.querySelector('.story-hero');
+  const firstSection = document.querySelector('.story-section');
+  const links = hero?.querySelector('.story-links');
+  if (!match || !links || !firstSection) return;
+
+  const element = (tag, text, className) => {
+    const node = document.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+
+  async function renderProject() {
+    const response = await fetch('/archive/projects.json?v=folio');
+    if (!response.ok) return;
+    const records = await response.json();
+    const project = records.find(record => record.slug === decodeURIComponent(match[1]));
+    if (!project?.presentation) return;
+    const {style, name, headline, focus, label} = project.presentation;
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = '/atelier/project-folios.css';
+    document.head.append(css);
+
+    const panel = element('section', '', 'project-folio');
+    panel.dataset.presentation = style;
+    panel.setAttribute('aria-labelledby', 'folio-headline');
+    const context = element('div', '', 'folio-context');
+    context.append(element('p', name, 'folio-type'));
+    const title = element('h2', headline);
+    title.id = 'folio-headline';
+    context.append(title, element('p', focus, 'folio-focus'));
+
+    const inventory = element('ol', '', 'folio-inventory');
+    inventory.setAttribute('aria-label', style === 'drawing' ? 'Design elements' : 'Project components');
+    project.components.forEach(component => inventory.append(element('li', component)));
+    panel.append(context, inventory);
+
+    const sections = [...document.querySelectorAll('.story-section')];
+    const recordLinks = [...sections.at(-1).querySelectorAll('a[href]')].slice(0, 3);
+    if (project.gaps?.length || recordLinks.length) {
+      const evidence = element('details', '', 'folio-evidence');
+      evidence.append(element('summary', 'Evidence and verification'));
+      const originalContext = sections.at(-1).querySelector('.context-note');
+      if (originalContext) evidence.append(element('p', originalContext.textContent));
+      if (project.gaps?.length) {
+        const list = element('ul');
+        project.gaps.forEach(gap => list.append(element('li', gap)));
+        evidence.append(list);
+      }
+      if (recordLinks.length) {
+        const nav = element('div', '', 'folio-links');
+        recordLinks.forEach(link => nav.append(link.cloneNode(true)));
+        evidence.append(nav);
+      }
+      panel.append(evidence);
+    }
+
+    // Keep the original, server-rendered project record if the archive is unavailable.
+    firstSection.before(panel);
+    sections.forEach(section => { section.hidden = true; });
+    hero.dataset.presentation = style;
+    if (project.demo) {
+      const action = element('a', label, 'pill primary folio-action');
+      action.href = project.demo;
+      for (const link of links.querySelectorAll('a.primary')) link.classList.remove('primary');
+      links.prepend(action);
+    }
+    const nav = document.querySelector('.site-nav a[href="/#selected"]');
+    if (nav) nav.href = '/#projects';
+  }
+  renderProject().catch(error => console.warn('Could not load this project folio.', error));
 })();

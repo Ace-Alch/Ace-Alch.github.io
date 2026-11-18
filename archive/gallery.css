@@ -6,3 +6,19 @@
 .archive-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
 .archive-actions .button{font-size:.8rem}
 .archive-card:focus-within{border-bottom-color:#65d6ff}
+
+.archive-tools{gap:1rem}
+.archive-card{--archive-accent:#7fc8b1;position:relative;border-bottom:2px solid var(--archive-accent);padding:1rem;border-radius:1rem;background:color-mix(in srgb,var(--archive-accent) 6%,transparent);content-visibility:auto;contain-intrinsic-block-size:auto 380px}
+.archive-card[data-presentation=research]{--archive-accent:#77cdbc}
+.archive-card[data-presentation=instrument]{--archive-accent:#d99b58}
+.archive-card[data-presentation=drawing]{--archive-accent:#81a6d6}
+.archive-card[data-presentation=machine]{--archive-accent:#9bb866}
+.archive-card[data-presentation=field]{--archive-accent:#938cda}
+.archive-card[data-presentation=network]{--archive-accent:#72bdda}
+.archive-card[data-presentation=product]{--archive-accent:#c88dad}
+.archive-card[data-presentation=arcade]{--archive-accent:#d2b869}
+.archive-card img{margin-bottom:1rem}
+.archive-card .archive-actions{margin-top:14px}
+.archive-card .archive-actions .primary{border-color:var(--archive-accent)}
+.archive-card .archive-meta{opacity:.85}
+@media(max-width:560px){.archive-card{padding:.85rem}}

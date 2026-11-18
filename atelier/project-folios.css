@@ -1,0 +1,41 @@
+
+/* Case folios inherit the portfolio color scheme and keep long evidence below the fold. */
+.project-folio{--case-tone:#b4e2cb;--case-line:color-mix(in srgb,var(--case-tone) 43%,transparent);color:#eef3f5;width:100%;margin:0 auto clamp(2rem,7vw,6rem);padding:clamp(1rem,3.8vw,3.3rem);border:1px solid var(--case-line);border-radius:16px;background:#11191c}
+.story-section[hidden]{display:none!important}
+.project-folio h2{max-width:25ch;margin:0;font-size:clamp(1.9rem,4.5vw,4.3rem);line-height:1.04;letter-spacing:-.055em}
+.folio-type{color:var(--case-tone);font-weight:700;font-size:.77rem;text-transform:uppercase;letter-spacing:.14em;margin:0 0 1rem}
+.folio-focus{max-width:62ch;margin:1rem 0 0;color:#c7d3d9;line-height:1.65;font-size:clamp(.96rem,1.8vw,1.16rem)}
+.folio-inventory{display:grid;gap:0;list-style:none;counter-reset:parts;margin:1.45rem 0 0;padding:0}
+.folio-inventory li{counter-increment:parts;border-bottom:1px solid var(--case-line);padding:.85rem 0;color:#eef3f5}
+.folio-inventory li:before{content:counter(parts,decimal-leading-zero);color:var(--case-tone);font:600 .8rem ui-monospace,monospace;margin-right:.85rem}
+.folio-evidence{grid-column:1/-1;margin-top:1.45rem;border-top:1px solid var(--case-line);padding:1rem 0 0;color:#c7d3d9;line-height:1.55}
+.folio-evidence summary{cursor:pointer;color:#eef3f5;min-height:32px;font-weight:650}
+.folio-evidence ul{padding-inline-start:1.5rem;margin:.7rem 0 1rem}
+.folio-links{display:flex;flex-wrap:wrap;gap:.75rem 1.5rem}
+.folio-links a,.folio-action:focus-visible{color:var(--case-tone)}
+.project-folio[data-presentation=research]{--case-tone:#8ae4d0;background:#112321;border-top:4px solid var(--case-tone)}
+.project-folio[data-presentation=research] .folio-context{border-bottom:1px solid var(--case-line);padding-bottom:1.25rem}
+.project-folio[data-presentation=research] .folio-inventory{grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));column-gap:1.25rem}
+.project-folio[data-presentation=instrument]{--case-tone:#ffc67b;background:#20170e;display:grid;grid-template-columns:3fr 2fr;gap:0 clamp(1rem,4vw,3rem)}
+.project-folio[data-presentation=instrument] .folio-inventory{margin:0;padding:0 1rem;border:1px solid var(--case-line);align-self:start;background:#170f09;font-family:ui-monospace,monospace}
+.project-folio[data-presentation=instrument] .folio-inventory li:last-child{border:0}
+.project-folio[data-presentation=drawing]{--case-tone:#a9cefc;background-color:#142334;background-image:linear-gradient(#88b7e719 1px,transparent 1px),linear-gradient(90deg,#88b7e719 1px,transparent 1px);background-size:24px 24px}
+.project-folio[data-presentation=drawing] .folio-inventory{grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.4rem}
+.project-folio[data-presentation=drawing] .folio-inventory li{background:#142334;border:1px solid var(--case-line);padding:.85rem}
+.project-folio[data-presentation=machine]{--case-tone:#d7f59c;background:#1b2418;border-left:5px solid var(--case-tone)}
+.project-folio[data-presentation=machine] .folio-inventory{display:flex;flex-wrap:wrap;gap:.5rem}
+.project-folio[data-presentation=machine] .folio-inventory li{border:1px solid var(--case-line);padding:.7rem;border-radius:4px}
+.project-folio[data-presentation=field]{--case-tone:#aac2ff;background:radial-gradient(at 75% 0,#263858 0,transparent 75%),#14182b;display:grid;grid-template-columns:1fr 2fr;gap:0 clamp(1rem,4vw,3rem)}
+.project-folio[data-presentation=field] .folio-inventory{grid-row:1;grid-column:1;margin:0}
+.project-folio[data-presentation=field] .folio-context{grid-column:2}
+.project-folio[data-presentation=network]{--case-tone:#96d9ff;background:#101e2a}
+.project-folio[data-presentation=network] .folio-inventory{padding-left:1rem;border-left:2px solid var(--case-line)}
+.project-folio[data-presentation=network] .folio-inventory li{position:relative}
+.project-folio[data-presentation=network] .folio-inventory li:after{position:absolute;left:-1.35rem;top:1.15rem;content:'';width:.55rem;height:.55rem;border-radius:50%;background:var(--case-tone)}
+.project-folio[data-presentation=product]{--case-tone:#f3bce0;background:#251927;border-radius:32px}
+.project-folio[data-presentation=product] .folio-inventory{display:flex;flex-wrap:wrap;gap:.5rem}
+.project-folio[data-presentation=product] .folio-inventory li{border:1px solid var(--case-line);padding:.65rem .95rem;border-radius:999px}
+.project-folio[data-presentation=arcade]{--case-tone:#f8e597;background:repeating-linear-gradient(0deg,#161723 0 3px,#191b28 3px 6px);border-radius:0;border-width:2px}
+.project-folio[data-presentation=arcade] .folio-inventory{grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.5rem;font-family:ui-monospace,monospace}
+@media(max-width:720px){.project-folio[data-presentation=instrument],.project-folio[data-presentation=field]{display:block}.project-folio[data-presentation=instrument] .folio-inventory,.project-folio[data-presentation=field] .folio-inventory{margin-top:1.1rem}}
+@media(max-width:440px){.folio-inventory{display:block!important}.folio-inventory li{margin-top:.4rem}}
