@@ -977,7 +977,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   function resetView() {
     streetCamera = false;
     explorer.setMode("orbit");
-    controls.target.set(0, 3.4, 4);
+    controls.target.set(0, activeNetwork==="controls"?13:3.4, 4);
     const narrow = Math.max(1, 1.36 / Math.max(0.45, camera.aspect));
       const distance = Math.min(365, 176 * narrow);
     camera.position.copy(controls.target).addScaledVector(viewDirection, distance);
@@ -1060,8 +1060,8 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     }
     for (const { field } of districts.values()) fieldMoving = field.animate(now, reduceMotion.matches) || fieldMoving;
     if (redraw || fieldMoving || controlMoving || (utilities && liveFlows.length && !reduceMotion.matches)) {
-      for (const {sign} of districts.values()) sign.visible = labels && !streetCamera;
-      for (const {badge} of stations.values()) badge.visible = labels && !streetCamera;
+      for (const {sign} of districts.values()) sign.visible = labels && !streetCamera && utilities;
+      for (const {badge} of stations.values()) badge.visible = labels && !streetCamera && utilities;
       renderer.render(scene, camera);
       redraw = false;
     }

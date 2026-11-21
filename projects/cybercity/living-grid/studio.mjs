@@ -190,7 +190,8 @@ function renderUtilities(frame) {
     const enabled=key==="water"?pump.enabled:key==="main"?state.mainEnabled:key==="generator"?elements.generator.checked:district?.switches[key];
     control.disabled=!global&&!district;
     control.setAttribute("aria-pressed",String(Boolean(enabled)));
-    const value=key==="relay"&&district?["OPEN","CLOSED","AUTO"][district.relayMode]:enabled?"ON":"OFF";
+    const value=key==="relay"&&district?["OPEN","CLOSED","AUTO"][district.relayMode]
+      :key==="localMcu"&&district&&!district.localAlive&&enabled?"SCENARIO FAULT":enabled?"ON":"OFF";
     control.textContent=`${global?"":(district?.id ?? "District")+" "}${label} · ${value}`;
   }
   const relay=frame.flows.filter(({type})=>type==="relay").map(({from,to,watts})=>`${from} → ${to} ${watts.toFixed(1)} W`);
@@ -208,7 +209,8 @@ function renderAirSignals(frame) {
   const entries=frame.districts.map(zone=>{
     const power=zone.localAlive?"Local MCU online":zone.owner==="MAIN"?"Main takeover":"Local MCU offline";
     const command=zone.mainCommand==="NONE"?"No override":zone.mainCommand;
-    const switches=["battery","pv","load","generator"].map(key=>Number(zone.switches[key]&&zone.sourceEnabled)).join("");
+    const switches=["battery","pv","load","generator"].map(key=>
+      Number(zone.switches[key]&&zone.sourceEnabled&&(key!=="generator"||elements.generator.checked))).join("");
     return [zone.id,`${power} · Request ${Number(zone.request)} · Relay ${zone.relay?"closed":"open"} · SW1–4 ${switches} · ${command}`];
   });
   const signature=JSON.stringify([main,entries]);
@@ -590,7 +592,7 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=layers-1").then(({ mountCity }) => {
+import("./city.mjs?v=layers-2").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {
