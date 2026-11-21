@@ -1,4 +1,4 @@
-import { DISTRICTS } from "./model.mjs?v=street-lab-1";
+import { DISTRICTS } from "./model.mjs?v=utilities-1";
 
 const points = [93, 251, 409, 567];
 const name = { battery: "Battery", pv: "PV", load: "Demand", generator: "Generator feeder", relay: "Support relay", localMcu: "Local MCU" };
@@ -30,6 +30,10 @@ export function createSingleLine(root, onSelect, onSwitch) {
       <strong id="flow-switch-title"></strong>
       <div class="flow-buttons">${Object.entries(name).map(([key, label])=>`<button type="button" data-switch="${key}">${label}<small></small></button>`).join("")}</div>
     </div>`;
+  const explanation = document.createElement("details");
+  explanation.className = "experiment";
+  explanation.innerHTML = "<summary>Donor decision</summary><ul></ul>";
+  root.append(explanation);
   const zones = [...root.querySelectorAll("[data-zone]")];
   for (const zone of zones) {
     zone.addEventListener("click", () => onSelect(zone.dataset.zone));
@@ -45,12 +49,26 @@ export function createSingleLine(root, onSelect, onSwitch) {
   const switchTitle = root.querySelector("#flow-switch-title");
   const line = root.querySelector(".single-line");
   function update(frame, selected) {
-    const transfer = frame.flows.find(({ type }) => type === "relay");
-    line.toggleAttribute("data-sharing", Boolean(transfer));
+    const transfers = frame.flows.filter(({ type }) => type === "relay");
+    line.toggleAttribute("data-sharing", transfers.length > 0);
     line.toggleAttribute("data-generating", frame.totals.generator > .05);
-    const sharing = transfer ? `${transfer.from} → ${transfer.to} · ${transfer.watts.toFixed(1)} W`
+    const sharing = transfers.length ? transfers.map(({from,to,watts})=>`${from} → ${to} · ${watts.toFixed(1)} W`).join(" / ")
       : frame.support?.receiver ? `${frame.support.receiver} · ${frame.support.reason || "Awaiting support"}` : "Relays open";
     route.textContent = `${sharing}   ·   Shared generator ${frame.totals.generator.toFixed(1)} W`;
+    if (explanation.open) {
+      const candidates = frame.support?.candidates ?? [];
+      const lines = candidates.length ? candidates.map(candidate => `${candidate.id} · ${candidate.eligible ? "Eligible" : candidate.reason}`) 
+        : ["No donor assessment at this time."];
+      const list = explanation.querySelector("ul");
+      if (list.dataset.value !== lines.join("|")) {
+        list.dataset.value = lines.join("|");
+        list.replaceChildren(...lines.map(line => {
+          const item = document.createElement("li");
+          item.textContent = line;
+          return item;
+        }));
+      }
+    }
     for (const [i, group] of zones.entries()) {
       const district = frame.districts[i];
       group.toggleAttribute("data-selected", district.id === selected);
@@ -65,10 +83,12 @@ export function createSingleLine(root, onSelect, onSwitch) {
       const allowed = district?.switches[b.dataset.switch] ?? false;
       b.disabled = !district;
       b.setAttribute("aria-pressed", String(allowed));
-      b.querySelector("small").textContent = b.dataset.switch === "relay" && allowed ? "AUTO"
+      b.querySelector("small").textContent = b.dataset.switch === "relay" && district ? ["OPEN","CLOSED","AUTO"][district.relayMode]
         : b.dataset.switch === "localMcu" && allowed ? (district.localAlive ? "ENABLED" : "SCENARIO FAULT")
         : allowed ? "ENABLED" : "ISOLATED";
     }
   }
-  return { update };
+  let lastFrame, lastSelection;
+  explanation.addEventListener("toggle", () => { if (lastFrame) update(lastFrame,lastSelection); });
+  return { update(frame, selected) { lastFrame = frame; lastSelection = selected; update(frame,selected); } };
 }

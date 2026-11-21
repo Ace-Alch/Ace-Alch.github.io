@@ -5,8 +5,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { LIMITS } from './model.mjs?v=street-lab-1';
-import { buildField, surfaceTexture } from './field.mjs?v=street-lab-1';
+import { LIMITS } from './model.mjs?v=layers-1';
+import { buildField, surfaceTexture } from './field.mjs?v=layers-1';
+import { createExplorer } from './explore.mjs?v=living-grid-2';
+import { span, tower, createWaterNetwork } from './infrastructure.mjs?v=layers-1';
+import { CONTROL_ALTITUDE, createControlLayer } from './control-layer.mjs?v=camera-1';
+import { POWER_COLORS, describeBattery, displayWatts } from './power-readings.mjs';
 
 const ZONES = [
   { id: 'MG1', name: 'CRITICAL', tint: 0xf3aac6, site: [29, -24], asset: 'hospital', height: 13, width: 26 },
@@ -20,11 +24,14 @@ const SYSTEM = {
   DAQ: { site: [24, 54], tint: 0x8fe4b4, name: 'MONITORING / DAQ' },
 };
 const SHARING_BUS = [0, 1.64, 0];
-const GENERATOR_BUS = [0, 1.17, 7];
 const POWER_COLOR = 0x79f1ee;
 const GEN_COLOR = 0xffba6b;
 const BASIS = 'https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/libs/basis/';
 const ASSETS = {
+  ambulance: 'https://tevy.dev/models/ambulance/v1/lod2.glb',
+  airHandler: 'https://tevy.dev/models/rooftop-air-handler/v1/lod1.glb',
+  heatPump: 'https://tevy.dev/models/ac-unit-on-ground-blocks/v1/lod1.glb',
+  seesaw: 'https://tevy.dev/models/playground-seesaw/v1/lod1.glb',
   hospital: 'https://tevy.dev/models/hospital-building/v2/lod1.glb',
   factory: 'https://tevy.dev/models/factory-hall/v1/lod1.glb',
   school: 'https://tevy.dev/models/school-building/v1/lod1.glb',
@@ -127,7 +134,7 @@ function makeBadge(id, name, tint, big = true) {
   const map = new THREE.CanvasTexture(canvas);
   map.colorSpace = THREE.SRGBColorSpace;
   const badge = new THREE.Sprite(new THREE.SpriteMaterial({ map, depthTest: false, depthWrite: false, transparent: true, toneMapped: false }));
-  badge.scale.set(big ? 24 : 19, big ? 4.77 : 3.08, 1);
+  badge.scale.set(big ? 15 : 12.8, big ? 2.98 : 2.07, 1);
   badge.renderOrder = 9;
   return badge;
 }
@@ -219,23 +226,72 @@ function pvPanel(parent, x, z) {
   return { mount: tilt, placeholder: body };
 }
 
-function storage(parent, tint) {
-  const steel = material(0x637685, 0.53, 0.54);
-  const painted = material(0x2c3a49, 0.61, 0.37);
-  const dark = material(0x19232b, 0.66);
+function storage(parent) {
+  const steel = material(0x848d90,.49,.67);
+  const caseMaterial = material(0x303b3e,.76,.35);
+  const insulation = material(0x23332d,.85);
+  const copper = material(0xc4834d,.48,.75);
+  const red = material(0xa9382b,.7,.14);
+  const gold = luminous(0xa3df90,.24);
   const bays = [];
-  for (let i = 0; i < 3; i++) {
-    const x = (i - 1) * 1.89;
-    box(parent, steel, x, 1.51, 0, 1.7, 1.8, 2.6);
-    box(parent, painted, x, 1.51, 1.32, 1.49, 1.62, 0.075);
-    box(parent, dark, x, 1.78, 1.38, 1.14, 0.31, 0.05);
-    for (let j = 0; j < 3; j++) {
-      box(parent, dark, x, 1.27 - j * 0.15, 1.38, 1.16, 0.062, 0.045);
+  box(parent,steel,0,.77,0,6.25,.25,3.72);
+  box(parent,caseMaterial,0,1.04,0,5.9,.43,3.38);
+  box(parent,caseMaterial,0,1.43,1.51,5.9,.46,.25);
+  box(parent,caseMaterial,0,1.69,-1.52,5.9,.89,.22);
+  for (const x of [-1.63,0,1.63]) {
+    const core=cylinder(parent,insulation,x,1.94,0,.58,.58,2.44,28);
+    core.rotation.x=Math.PI/2;
+    for(const z of [-1.27,1.27]) {
+      const cap=cylinder(parent,z>0?red:steel,x,1.94,z,.52,.52,.13,24);
+      cap.rotation.x=Math.PI/2;
+      const bolt=cylinder(parent,copper,x,1.94,z*1.082,.18,.18,.12,12);
+      bolt.rotation.x=Math.PI/2;
     }
-    bays.push(box(parent, luminous(tint, 0.4), x, 1.79, 1.415, 0.76, 0.06, 0.023, false));
-    box(parent, steel, x, 0.73, 0, 1.82, 0.13, 2.84);
+    for(const z of [-.84,.84]) {
+      const clamp=cylinder(parent,steel,x,1.94,z,.613,.613,.12,28);
+      clamp.rotation.x=Math.PI/2;
+    }
   }
+  box(parent,copper,-.82,2.10,1.36,1.62,.10,.18);
+  box(parent,copper,.82,2.10,-1.36,1.62,.10,.18);
+  box(parent,steel,2.67,1.63,.65,.53,1.17,1.56);
+  box(parent,caseMaterial,2.68,1.72,1.44,.48,.48,.06);
+  for(let i=0;i<3;i++)bays.push(box(parent,gold.clone(),2.68,1.61+i*.17,1.49,.31,.075,.037,false));
+  const plate=makeSign(parent,"#beebae","3S Li-ion  /  BATTERY PACK",5.1,[0,1.40,1.65]);
+  plate.renderOrder=1;
+  cylinder(parent,red,2.5,1.4,-1.55,.17,.17,.43,16);
+  cylinder(parent,insulation,2.12,1.4,-1.55,.17,.17,.43,16);
   return bays;
+}
+
+function makePowerLabel(parent, color, at) {
+  const panel=document.createElement("canvas");
+  panel.width=640; panel.height=112;
+  const paint=panel.getContext("2d");
+  const map=new THREE.CanvasTexture(panel);
+  map.colorSpace=THREE.SRGBColorSpace;
+  const sign=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));
+  sign.scale.set(11.8,2.07,1);
+  sign.position.set(...at);
+  sign.renderOrder=8;
+  sign.visible=false;
+  parent.add(sign);
+  let previous="";
+  return {sign,set(text) {
+    if(text===previous)return;
+    previous=text;
+    paint.clearRect(0,0,640,112);
+    paint.fillStyle="#09171ef5";
+    paint.strokeStyle=`#${color.toString(16).padStart(6,"0")}`;
+    paint.lineWidth=5;
+    paint.beginPath();paint.roundRect(3,3,634,106,14);paint.fill();paint.stroke();
+    paint.fillStyle=paint.strokeStyle;
+    paint.textAlign="center";
+    paint.textBaseline="middle";
+    paint.font="700 40px Arial, sans-serif";
+    paint.fillText(text,320,58,603);
+    map.needsUpdate=true;
+  }};
 }
 
 function localUnit(parent, tint, scale = 1) {
@@ -430,7 +486,7 @@ function createDistrict(scene, zone, assetMounts) {
   box(solar, material(0x40525d, 0.59, 0.23), -3.82, 0.89, 0.0, 0.82, 0.62, 0.72);
   const solarLamp = box(solar, luminous(0x72e6d9, 0.6), -3.82, 1.23, 0, 0.31, 0.04, 0.36, false);
   const batteries = tag(place(new THREE.Group(), 5.0, 0, 16.1, root), zone.id, 'battery');
-  const energyLeds = storage(batteries, zone.tint);
+  const energyLeds = storage(batteries);
   const controller = tag(place(new THREE.Group(), 16.9, 0, 16.1, root), zone.id, 'local');
   const status = localUnit(controller, zone.tint);
   const bus = tag(place(new THREE.Group(), 12.45, 0, 15.85, root), zone.id, 'bus');
@@ -444,10 +500,28 @@ function createDistrict(scene, zone, assetMounts) {
   const relay = box(branch, luminous(0x526575, 0.19), 0, 1.53, 0, 2.13, 0.35, 1.75);
   box(branch, material(0x4b606d, 0.49, 0.43), 0, 1.24, 0, 2.6, 0.42, 2.16);
   const branchPos = [x + branch.position.x, 1.58, z + branch.position.z];
-  tube(root, [[-14.8, 0.77, 14], [-14.8, 0.77, 13.55], [12.7, 0.77, 13.55], [12.7, 0.77, 15.8]], 0.065, material(0x3e6d76, 0.55), 6);
-  tube(root, [[5.0, 0.81, 14.78], [5.0, 0.81, 14.45], [13.0, 0.81, 14.45]], 0.065, material(0x796b4e, 0.55), 6);
-  const field = buildField(root, zone, { place, box, cylinder, material, luminous, tag, tube, trees });
-  return { root, ring, status, busLight, solarLamp, sign, relay, energyLeds, branchPos, field };
+  const localSource = [
+    ["pv", [[-18.62,1.12,15.9],[-18.62,1.12,13.58],[12.45,1.12,13.58],[12.45,1.12,15.45]],[-11,3.3,14.1]],
+    ["battery", [[7.5,1.42,14.55],[7.5,1.07,13.98],[9.3,1.07,13.98],[9.3,1.07,15.35],[11.9,1.07,15.35]],[5,3.65,16.9]],
+    ["served", [[13.32,1.17,15.75],[14.06,1.17,15.75],[14.06,1.17,10.3],[10.8,1.17,10.3]],[14.4,3.55,10.9]]
+  ].map(([kind, points, at]) => {
+    const color=POWER_COLORS[kind];
+    const route=tag(new THREE.Group(),zone.id,kind==="served"?"bus":kind);
+    root.add(route);
+    const {object,path}=tube(route,points,.09,luminous(color,.2),8);
+    const sparks=Array.from({length:kind==="pv"?4:2},()=>mesh(new THREE.CapsuleGeometry(.067,.34,2,6),
+      new THREE.MeshBasicMaterial({color}),0,0,0,route,false));
+    return {kind,object,path,sparks,watts:0,label:makePowerLabel(route,color,at)};
+  });
+  const dab=tag(place(new THREE.Group(),9.3,0,14,root),zone.id,"battery");
+  box(dab,material(0x62717a,.54,.55),0,1.1,0,1.8,.56,1.28);
+  for(let i=0;i<6;i++)box(dab,material(0x334b54,.58,.45),-.66+i*.26,1.41,0,.075,.12,1.03);
+  const dabPlate=makeSign(dab,"#beebae","DAB",1.58,[0,1.13,.66]);dabPlate.renderOrder=1;
+  const distribution=tag(place(new THREE.Group(),10.8,0,10.3,root),zone.id,"bus");
+  box(distribution,material(0x42657c,.61,.42),0,1.04,0,1.15,.75,.68);
+  const field = buildField(root, zone, { place, box, cylinder, material, luminous, tag, tube, trees, assetMounts });
+  return { root, ring, status, busLight, solarLamp, sign, relay, energyLeds, branchPos, field, localSource,
+    mcuPosition:[x+16.9,1.5,z+16.1] };
 }
 
 function tube(parent, points, radius, surface, sides = 8) {
@@ -501,9 +575,14 @@ function systemNode(scene, id) {
 function sourceRoute(zone, kind) {
   const [x, , z] = zone.branchPos;
   if (kind === 'share') {
-    return [zone.branchPos, [x, SHARING_BUS[1], Math.sign(z) * 3.5], [0, SHARING_BUS[1], Math.sign(z) * 3.5], SHARING_BUS];
+    const start=[x,8.8,z], end=[0,8.8,0];
+    return [zone.branchPos,...span(start,end,.9), SHARING_BUS];
   }
-  return [[x + Math.sign(x) * 0.75, GENERATOR_BUS[1], z], [x + Math.sign(x) * 0.75, GENERATOR_BUS[1], GENERATOR_BUS[2]], GENERATOR_BUS, SYSTEM.GEN.port];
+  const side=Math.sign(x), start=[side*9.8,10.5,z], joint=[0,10.5,z<0?-12:12], middle=[0,10.5,33], end=[0,10.5,48.1];
+  const trunk=z<0?[[0,10.5,12],middle,end]:[middle,end];
+  const points=[joint,...trunk];
+  return { branch:[zone.branchPos,...span(start,joint,.52)],
+    anchors:[start,...points], trunk:points.slice(1).map((p,i)=>span(points[i],p,.71)) };
 }
 
 function conduitNodes(scene, districts) {
@@ -511,29 +590,44 @@ function conduitNodes(scene, districts) {
   scene.add(conduits);
   const sharing = material(0x345662, 0.58, 0.47);
   const generator = material(0x6b553e, 0.59, 0.46);
-  const telemetry = new THREE.LineDashedMaterial({ color: 0x4893a6, transparent: true, opacity: 0.53, dashSize: 0.66, gapSize: 0.63 });
-  const paths = new Map();
-  for (const [id, zone] of districts) {
-    tube(conduits, sourceRoute(zone, 'share'), 0.15, sharing);
-    tube(conduits, sourceRoute(zone, 'generator'), 0.13, generator);
-    paths.set(`GEN:${id}`, sourceRoute(zone, 'generator').slice().reverse());
-    const [x, y, z] = zone.branchPos;
-    const [px, , pz] = sourceRoute(zone, 'generator')[0];
-    tube(conduits, [[px, GENERATOR_BUS[1], pz], [x, y, z]], 0.13, generator, 6);
-    box(conduits, luminous(0xcb9f60, 0.34), px, GENERATOR_BUS[1] + 0.06, pz, 0.69, 0.26, 0.52);
-    for (const name of ['MAIN', 'DAQ']) {
-      const [srcX, srcZ] = SYSTEM[name].site;
-      const tech = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-        v3([srcX, 0.93, srcZ - 6]), v3([srcX, 0.93, 46]),
-        v3([x + Math.sign(x) * 1.52, 0.93, 46]), v3([x + Math.sign(x) * 1.52, 0.93, z]),
-      ]), telemetry);
-      tech.computeLineDistances();
-      conduits.add(tech);
-    }
+  const support = { box, cylinder, material };
+  const towers = new Set();
+  function addTower(point, kind) {
+    const key=`${point[0]},${point[2]}`;
+    if (towers.has(key)) return;
+    towers.add(key);
+    const footing=new THREE.Group();
+    conduits.add(footing);
+    tower(footing,point[0],point[2],point[1],kind,support);
+    combineStaticMeshes(footing);
   }
+  const paths = new Map();
+  const sharedGenerator = new Map();
+  for (const [id, zone] of districts) {
+    const relayRun=sourceRoute(zone,'share'), gen=sourceRoute(zone,'generator');
+    [relayRun[1],relayRun.at(-2)].forEach(point=>addTower(point,'relay'));
+    gen.anchors.forEach(point=>addTower(point,'generator'));
+    tube(conduits,relayRun,.078,sharing,6);
+    tube(conduits,gen.branch,.078,generator,6);
+    const portions=[];
+    for (const segment of gen.trunk) {
+      const key=`GEN:trunk-${segment[0][2]}`;
+      if(!sharedGenerator.has(key)) {
+        sharedGenerator.set(key,segment);
+        tube(conduits,segment,.085,generator,6);
+        paths.set(key,segment.slice().reverse());
+      }
+      portions.push(key);
+    }
+    zone.generatorTrunk=portions.concat("GEN:riser");
+    paths.set(`GEN:${id}`,gen.branch.slice().reverse());
+  }
+  const riser = [SYSTEM.GEN.port,[0,10.5,48.1]];
+  tube(conduits,riser,.085,generator,6);
+  paths.set("GEN:riser",riser);
   for (const [idA, a] of districts) for (const [idB, b] of districts) {
     if (idA === idB) continue;
-    paths.set(`${idA}:${idB}`, sourceRoute(a, 'share').concat(sourceRoute(b, 'share').slice(0, -1).reverse()));
+    paths.set(`${idA}:${idB}`, sourceRoute(a, 'share').slice(0,-1).concat(sourceRoute(b, 'share').slice(0,-2).reverse()));
   }
   const hub = tag(place(new THREE.Group(), 0, 0, 0, conduits), 'MAIN', 'tie');
   cylinder(hub, material(0x506571, 0.42, 0.62), 0, 0.98, 0, 1.93, 2.31, 0.65, 12);
@@ -709,6 +803,24 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   renderer.shadowMap.needsUpdate = true;
   renderer.setClearColor(0x0a141d, 1);
   const scene = new THREE.Scene();
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(470, 32, 16), new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: { light: { value: 1 } },
+    vertexShader: 'varying vec3 ray; void main(){ ray=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+    fragmentShader: `varying vec3 ray; uniform float light;
+      float noise(vec2 p) {return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float cloud(vec2 p) {vec2 a=floor(p), b=fract(p); b=b*b*(3.-2.*b); return mix(mix(noise(a),noise(a+vec2(1,0)),b.x),mix(noise(a+vec2(0,1)),noise(a+1.),b.x),b.y);}
+      void main(){vec3 d=normalize(ray); float h=max(0.,d.y);
+      vec3 day=mix(vec3(.624,.741,.773),vec3(.27,.52,.77),smoothstep(0.,.78,h));
+      vec2 uv=d.xz/max(.24,h+.22)*3.;
+      float c=smoothstep(.57,.82,cloud(uv)*.7+cloud(uv*2.3)*.3)*smoothstep(.02,.32,h);
+      day=mix(day,vec3(.88,.91,.91),c*.75);
+      vec3 night=mix(vec3(.11,.16,.22),vec3(.024,.044,.091),smoothstep(0.,.66,h));
+      gl_FragColor=vec4(mix(night,day,light),1.);}
+    `,
+  }));
+  sky.renderOrder = -10;
+  scene.add(sky);
   scene.fog = new THREE.FogExp2(0x0a141d, 0.0026);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const room = new RoomEnvironment();
@@ -740,23 +852,25 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     const color = daylight ? daylightSky : nightSky;
     renderer.setClearColor(color, 1);
     scene.fog.color.setHex(color);
-    scene.fog.density = daylight ? .0015 : .0026;
+    scene.fog.density = daylight ? .003 : .0038;
+    sky.material.uniforms.light.value = Number(daylight);
     key.intensity = daylight ? 3.2 : 1.25;
     fill.intensity = daylight ? .88 : 1.3;
     rim.intensity = daylight ? .34 : .65;
+    for (const {field} of districts.values()) field.setDaylight(daylight);
     renderer.shadowMap.needsUpdate = true;
     redraw = true;
   }
 
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 560);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.06, 700);
   camera.position.set(104, 103, 125);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.075;
-  controls.minDistance = 22;
-  controls.maxDistance = 396;
+  controls.minDistance = 5;
+  controls.maxDistance = 460;
   controls.maxPolarAngle = Math.PI / 2.20;
-  controls.zoomSpeed = 0.88;
+  controls.zoomSpeed = 1.1;
   controls.rotateSpeed = 0.66;
   controls.screenSpacePanning = true;
   controls.target.set(0, 3.0, 5);
@@ -765,7 +879,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   fieldTexture.repeat.set(160, 160);
   fieldTexture.needsUpdate = true;
   const floor = new THREE.MeshStandardMaterial({ color: 0x8d9d7c, map: fieldTexture, roughness: .96 });
-  const stage = mesh(new THREE.PlaneGeometry(1100, 1100), floor, 0, -2.45, 0, scene, false);
+  const stage = mesh(new THREE.CircleGeometry(430,64), floor, 0, -2.45, 0, scene, false);
   stage.rotation.x = -Math.PI / 2;
   const plinth = material(0x263748, 0.69, 0.27);
   deck(scene, plinth, 0, -2.0, 7, 128, 127, 0.92, 7);
@@ -783,7 +897,17 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   for (const id of Object.keys(SYSTEM)) stations.set(id, systemNode(scene, id));
   const assetMounts = [];
   const districts = new Map(ZONES.map((zone) => [zone.id, createDistrict(scene, zone, assetMounts)]));
+  const emergency = tag(place(new THREE.Group(), 11,.83,10.9, districts.get("MG1").root), "MG1", "consumer");
+  emergency.rotation.y = Math.PI / 2;
+  assetMounts.push({ name: "ambulance", target: emergency, height: 1.75, width: 1.5, depth: 4.8, replace: true });
+  for (const [x,z,size] of [[-102,-74,19],[-83,-85,15],[-122,37,16],[92,-79,13],[112,43,19],[83,77,12]]) {
+    const rise=mesh(new THREE.SphereGeometry(size,22,12),floor,x,-7,z,scene,false);
+    rise.scale.y=.49;
+    for (let i=0;i<5;i++) trees(scene,x+(i-2)*3,z+Math.sin(i*2)*5,311+i+x,.82);
+  }
   const paths = conduitNodes(scene, districts);
+  const water = createWaterNetwork(scene,districts,{ box,cylinder,material,luminous,tube,tag });
+  const controlLayer = createControlLayer(scene,districts,{makeBadge,tube,tag});
   const activeLayer = new THREE.Group();
   scene.add(activeLayer);
   const highlights = new Map();
@@ -797,10 +921,20 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   let down = null;
   let animation;
   let viewStarted = false;
+  let labels = true;
+  let streetCamera = false;
   let frameData;
   let liveFlows = [];
   let redraw = true;
   const drawOnChange = () => { redraw = true; };
+  const explorer = createExplorer(canvas, camera, controls, drawOnChange, reduceMotion);
+  let quality = "high";
+  function setQuality(preset) {
+    quality = preset;
+    renderer.shadowMap.enabled = quality !== "low";
+    renderer.shadowMap.needsUpdate = true;
+    resize();
+  }
   controls.addEventListener('change', drawOnChange);
   reduceMotion.addEventListener('change', drawOnChange);
 
@@ -823,17 +957,35 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     for (const glint of highlight.glints) glint.visible = on && !reduceMotion.matches;
   }
 
-  function update(data) {
+  let activeNetwork="utilities";
+  function update(data, mainEnabled=true) {
     frameData = data;
     const flows = new Map();
     for (const entry of data?.flows ?? []) {
       const key = `${entry.from}:${entry.to}`;
       if (entry.watts > 0.04) flows.set(key, (flows.get(key) ?? 0) + entry.watts);
+      if(entry.type==="generator" && entry.watts>.04) for(const section of districts.get(entry.to)?.generatorTrunk??[]) {
+        flows.set(section,(flows.get(section)??0)+entry.watts);
+      }
     }
     for (const name of highlights.keys()) if (!flows.has(name)) setHighlight(name, false, 0);
     liveFlows = [...flows];
     for (const [name, watts] of liveFlows) setHighlight(name, true, watts);
-    for (const row of data?.districts ?? []) districts.get(row.id)?.field.update(row);
+    const pump = data?.districts?.find(({id})=>id==="MG2")?.services.find(({id})=>id==="cooling");
+    const waterSupply = pump?.demand > .001 ? Math.min(1,pump.served/pump.demand) : 0;
+    water.update(waterSupply);
+    for (const row of data?.districts ?? []) {
+      const zone=districts.get(row.id);
+      zone?.field.update(row,waterSupply);
+      for(const link of zone?.localSource??[]) {
+        link.watts=row[link.kind];
+        link.object.material.emissiveIntensity=.12 + Math.min(.7,Math.abs(link.watts)/18);
+        const label=link.kind==="pv"?"PV → bus":link.kind==="served"?"Bus → loads"
+          :describeBattery(link.watts)==="Idle"?"Battery idle":link.watts<0?"Bus → battery":"Battery → bus";
+        link.label.set(`${label}  ·  ${displayWatts(link.watts)}`);
+      }
+    }
+    controlLayer.update(data,mainEnabled);
     recolor();
   }
 
@@ -859,7 +1011,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
       place.sign.material.opacity = isSelected ? 1 : 0.79;
       for (let i = 0; i < place.energyLeds.length; i++) {
         const offline = row?.switches?.battery === false;
-        place.energyLeds[i].material.emissive.setHex(offline ? 0xf37463 : config.tint);
+        place.energyLeds[i].material.emissive.setHex(offline ? 0xf37463 : row?.battery<-.05 ? 0x7ecdf1 : POWER_COLORS.battery);
         place.energyLeds[i].material.emissiveIntensity = offline ? 0.63 : (row?.soc ?? 52) / 100 > i / 3 ? 0.78 : 0.105;
       }
     }
@@ -871,6 +1023,8 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     selected = id;
     recolor();
     if (focus) {
+      streetCamera = false;
+      explorer.setMode("orbit");
       const site = ZONES.find((zone) => zone.id === id)?.site ?? SYSTEM[id]?.site;
       if (!site) return;
       const direction = camera.position.clone().sub(controls.target).normalize();
@@ -882,11 +1036,21 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   }
 
   function resetView() {
-    controls.target.set(0, 3.4, 4);
+    streetCamera = false;
+    explorer.setMode("orbit");
+    controls.target.set(0, activeNetwork==="controls"?CONTROL_ALTITUDE*.56:3.4, 4);
     const narrow = Math.max(1, 1.36 / Math.max(0.45, camera.aspect));
-      const distance = Math.min(365, 176 * narrow);
+    const distance = Math.min(420, (activeNetwork==="controls"?190:176) * narrow);
     camera.position.copy(controls.target).addScaledVector(viewDirection, distance);
     controls.update();
+  }
+
+  function zoomCamera(factor) {
+    const offset=camera.position.clone().sub(controls.target);
+    const distance=bounded(offset.length()*factor,controls.minDistance,controls.maxDistance);
+    camera.position.copy(controls.target).add(offset.setLength(distance));
+    controls.update();
+    redraw=true;
   }
 
   function resize() {
@@ -894,7 +1058,8 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     if (rect.width < 2 || rect.height < 2) return;
     camera.aspect = rect.width / rect.height;
     camera.updateProjectionMatrix();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, rect.width < 740 ? 1.5 : 2));
+    const cap = {low:.75,medium:1,high:1.5,ultra:2}[quality] ?? 1.5;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cap));
     renderer.setSize(rect.width, rect.height, false);
     redraw = true;
     if (!viewStarted) {
@@ -908,7 +1073,8 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     if (!rect.width || !rect.height) return null;
     pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
     ray.setFromCamera(pointer, camera);
-    for (const hit of ray.intersectObjects(pickRoots, true)) {
+    const roots=activeNetwork==="controls"?controlLayer.pickTargets():pickRoots;
+    for (const hit of ray.intersectObjects(roots, true)) {
       const result = pickFrom(hit.object);
       if (result) return result;
     }
@@ -933,7 +1099,8 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
 
   function render(now) {
     if (disposed) return;
-    controls.update();
+    if (controls.enabled) controls.update();
+    explorer.tick(now);
     for (const [name, watts] of liveFlows) {
       const highlight = highlights.get(name);
       if (!highlight) continue;
@@ -945,9 +1112,27 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
         glint.position.copy(highlight.path.getPointAt(t));
       }
     }
-    let fieldMoving = false;
+    const utilities = activeNetwork==="utilities";
+    let fieldMoving = utilities && water.animate(now,reduceMotion.matches);
+    let controlMoving = !utilities && controlLayer.animate(now,reduceMotion.matches);
+    const axis = new THREE.Vector3(0,1,0);
+    for(const [id,{localSource}] of districts) for(const link of localSource) {
+      const live=utilities&&Math.abs(link.watts)>.05;
+      link.label.sign.visible=utilities&&labels&&id===selected;
+      for(const [i,spark] of link.sparks.entries()) {
+        spark.visible=live;
+        if(!live)continue;
+        const f=(i/link.sparks.length+(reduceMotion.matches?.32:now*.00018)*(link.watts<0?-1:1)+100)%1;
+        spark.position.copy(link.path.getPointAt(f));
+        spark.quaternion.setFromUnitVectors(axis,link.path.getTangentAt(f).normalize());
+      }
+      fieldMoving ||= live&&!reduceMotion.matches;
+    }
     for (const { field } of districts.values()) fieldMoving = field.animate(now, reduceMotion.matches) || fieldMoving;
-    if (redraw || fieldMoving || (liveFlows.length && !reduceMotion.matches)) {
+    if (redraw || fieldMoving || controlMoving || (utilities && liveFlows.length && !reduceMotion.matches)) {
+      for (const {sign} of districts.values()) sign.visible = labels && !streetCamera && utilities;
+      for (const {badge} of stations.values()) badge.visible = labels && !streetCamera && utilities;
+      sky.position.copy(camera.position);
       renderer.render(scene, camera);
       redraw = false;
     }
@@ -955,7 +1140,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   }
 
   const pickRoots = [...Array.from(districts.values(), (district) => district.root),
-    ...Array.from(stations.values(), (station) => station.group)];
+    ...Array.from(stations.values(), (station) => station.group),water.root];
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   canvas.addEventListener('pointerdown', pointerDown);
@@ -978,9 +1163,25 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     update,
     select,
     resetView,
+    zoomCamera,
     setDaylight,
+    setCamera(mode) {
+      streetCamera = mode === "walk";
+      if (mode === "orbit") resetView(); else explorer.setMode(mode);
+      redraw = true;
+    },
+    setLabels(visible) { labels = visible; redraw = true; },
+    setNetwork(network) {
+      activeNetwork=network;
+      activeLayer.visible=network==="utilities";
+      water.root.visible=network==="utilities";
+      controlLayer.setVisible(network==="controls");
+      redraw=true;
+    },
+    setQuality,
     dispose() {
       disposed = true;
+      explorer.dispose();
       cancelAnimationFrame(animation);
       observer.disconnect();
       controls.removeEventListener('change', drawOnChange);

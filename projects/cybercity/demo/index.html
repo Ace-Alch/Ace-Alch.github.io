@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0c1417">
   <meta name="description" content="Explore Mehdi Moallemkolaei’s four-microgrid CyberCity thesis in an interactive 3D control room.">
-  <title>CyberCity Control Room | Mehdi Moallemkolaei</title>
+  <title>CyberCity: The Living Grid | Mehdi Moallemkolaei</title>
   <link rel="icon" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./studio.css?v=street-lab-1">
+  <link rel="stylesheet" href="./studio.css?v=living-grid-1">
+  <link rel="stylesheet" href="./game.css?v=power-1">
   <link rel="stylesheet" href="./monitor.css">
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}
   </script>
-  <script type="module" src="./studio.mjs?v=street-lab-1"></script>
+  <script type="module" src="./studio.mjs?v=power-1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -32,7 +33,7 @@
     <header class="masthead">
       <div>
         <p class="eyebrow">MSc thesis · Tampere University · 2026</p>
-        <h1>CyberCity<span>.</span></h1>
+        <h1>CyberCity <span>The Living Grid</span></h1>
         <p class="intro">Four 12 V DC microgrids. One shared generator. Explore how local controllers, relay support, and the Main MCU keep priority loads supplied.</p>
       </div>
       <details class="model-note">
@@ -42,12 +43,31 @@
       </details>
     </header>
 
-    <section class="workbench" id="city" aria-label="3D city control room">
+    <div class="mode-strip" aria-label="Game modes">
+      <button type="button" data-game="explore" aria-pressed="true">Explore</button>
+      <button type="button" data-game="sandbox" aria-pressed="false">Engineering sandbox</button>
+      <button type="button" data-game="challenge" aria-pressed="false">Resilience challenges</button>
+      <a href="./brief.html">Upgrade brief</a>
+    </div>
+    <section class="workbench" id="city" data-game="explore" aria-label="3D city control room">
+      <section class="utility-console" aria-label="City power status and switches">
+        <div class="utility-status" id="utility-status"></div>
+        <div class="utility-switches" id="utility-switches" aria-label="City and district switches"></div>
+        <p id="utility-flow" class="utility-flow"></p>
+      </section>
       <aside class="scenario-panel" aria-labelledby="scenario-title">
         <h2 id="scenario-title">Scenarios</h2>
         <div id="scenario-list" class="scenario-list" aria-label="Thesis scenarios"></div>
         <p id="scenario-description" class="scenario-description"></p>
         <div id="scenario-events" class="scenario-events" aria-label="Scheduled events"></div>
+        <section class="mission" id="mission" hidden aria-labelledby="mission-title">
+          <h3 id="mission-title">Mission objective</h3>
+          <p id="mission-objective"></p>
+          <ol id="mission-checks"></ol>
+          <output id="mission-result">Run the scenario to get a report.</output>
+          <button id="water-drill" type="button">Start water service drill</button>
+          <button id="export-run" type="button">Export browser telemetry</button>
+        </section>
         <details class="experiment">
           <summary>Change the controls</summary>
           <p>Changes recalculate the browser run.</p>
@@ -64,31 +84,50 @@
         <div class="view-select" aria-label="City display">
           <button id="city-mode" type="button" aria-pressed="true">3D City</button>
           <button id="line-mode" type="button" aria-pressed="false">Electrical view</button>
+          <button id="mcu-layer" type="button" aria-pressed="false" disabled>MCU signal layer</button>
           <button id="wide-view" type="button" aria-pressed="false">Expand view</button>
           <button id="daylight" type="button" aria-pressed="true" disabled>Daylight</button>
+          <button id="clean-hud" type="button" aria-pressed="false">Clear HUD</button>
         </div>
         <div class="view-frame" id="city-frame">
           <div class="city-fallback" aria-hidden="true"></div>
-          <canvas id="city-canvas" aria-label="Interactive three-dimensional view of the four CyberCity microgrids"></canvas>
+          <canvas id="city-canvas" tabindex="0" aria-label="Interactive three-dimensional view of the four CyberCity microgrids. In walk and drone modes, use W A S D or the arrow keys to move, and drag to look."></canvas>
           <div class="view-tools">
             <span class="view-name">CITY VIEW <span> / </span> 12 V DC NETWORK</span>
             <div class="camera-controls">
+              <button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in" disabled>+</button>
+              <button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out" disabled>−</button>
               <button id="focus-view" type="button" disabled>Focus selection</button>
               <button id="reset-view" type="button" disabled>City overview</button>
             </div>
+          </div>
+          <div class="navigation-controls">
+            <label>Camera <select id="camera-mode" disabled><option value="orbit">Overview</option><option value="walk">On foot</option><option value="drone">Drone</option><option value="tour">Flyover</option></select></label>
+            <label>Graphics <select id="graphics" disabled><option value="low">Low</option><option value="medium">Medium</option><option value="high" selected>High</option><option value="ultra">Ultra</option></select></label>
+          </div>
+          <div id="move-pad" hidden aria-label="Camera movement">
+            <button type="button" data-move="up" aria-label="Move forward">↑</button><button type="button" data-move="down" aria-label="Move backward">↓</button>
+            <button type="button" data-move="left" aria-label="Move left">←</button><button type="button" data-move="right" aria-label="Move right">→</button>
+            <button type="button" data-move="raise" aria-label="Increase altitude">+</button><button type="button" data-move="lower" aria-label="Decrease altitude">−</button>
           </div>
           <p id="scene-status" class="scene-status" role="status">Preparing 3D city…</p>
           <p id="fault-status" class="fault-status" role="status" hidden></p>
           <div class="view-key" aria-label="Power path legend">
             <span><i class="key-relay"></i> Relay support</span>
             <span><i class="key-generator"></i> Generator supply</span>
+            <span><i class="key-pv"></i> PV to bus</span>
+            <span><i class="key-battery"></i> Battery ↔ bus</span>
+            <span><i class="key-water"></i> Water</span>
           </div>
+          <div class="signal-key" id="signal-key" hidden><span>Blue · local status to Main</span><span>Amber · supervisory commands</span></div>
           <p class="camera-help">Drag to orbit · Scroll or pinch to zoom</p>
         </div>
         <div class="diagram" id="diagram" hidden></div>
+        <section id="air-signals" class="air-signals" aria-label="MCU signal status" hidden></section>
         <div class="transport">
           <button id="play" type="button">Run scenario</button>
           <button id="reset-time" type="button">Restart</button>
+          <label class="speed-control">Speed <select id="sim-speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
           <label class="timeline" for="time"><span>Simulation time</span><input type="range" id="time" min="0" max="20" step="0.1" value="0"></label>
           <output id="clock" for="time">0.0 / 20 s</output>
         </div>
@@ -102,6 +141,11 @@
           <h3 id="node-title">Critical</h3>
           <p id="node-description"></p>
           <div id="node-metrics" class="node-metrics"></div>
+          <section id="local-power" class="local-power" aria-labelledby="local-power-title">
+            <h4 id="local-power-title">Live power paths</h4>
+            <dl id="local-power-rows"></dl>
+            <p id="battery-state"></p>
+          </section>
           <p id="node-state" class="node-state"></p>
           <div id="service-controls" class="service-controls" aria-label="District equipment"></div>
           <details id="district-control" class="experiment">
@@ -115,7 +159,7 @@
               <label>SW2 PV <select name="pv"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
               <label>SW3 Demand path <select name="load"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
               <label>SW4 Generator <select name="generator"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
-              <label>Relay manual <select name="relay"><option value="">Unchanged</option><option value="false">Lock open</option><option value="true">Auto</option></select></label>
+              <label>Relay manual <select name="relayMode"><option value="">Unchanged</option><option value="0">Force open (0)</option><option value="1">Force closed (1)</option><option value="2">Automatic (2)</option></select></label>
               <label>RPi_SW Local MCU <select name="localMcu"><option value="">Unchanged</option><option value="false">Disconnect</option><option value="true">Enable</option></select></label>
               <button type="submit">Apply event</button>
               <button id="clear-events" type="button">Clear custom events</button>

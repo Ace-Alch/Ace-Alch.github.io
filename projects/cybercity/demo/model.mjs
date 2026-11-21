@@ -3,7 +3,7 @@
  * Scenario inputs and acceptance criteria come from the thesis, Chapter 6.
  * Dispatch is a steady-state power balance. It cannot reproduce SPS waveforms.
  */
-import { SERVICES } from "./services.mjs";
+import { SERVICES } from "./services.mjs?v=layers-1";
 
 export const LIMITS = Object.freeze({
   duration: 20,
@@ -175,7 +175,7 @@ function decideSupport(districts, activePair, t, settings, sc) {
     const reason = donorReason(zone, receiver);
     return { id: zone.id, eligible: reason === null, reason, score: donorScore(zone) };
   });
-  if (!settings.sharing) return { receiver, donor: null, reason: "Relay sharing disabled", candidates };
+  if (!settings.sharing || !settings.mainEnabled) return { receiver, donor: null, reason: "Automatic relay sharing disabled", candidates };
   if (activePair && activePair.receiver === receiver.id) {
     const established = districts.find((zone) => zone.id === activePair.donor);
     const safe = donorReason(established, receiver, true) === null;
@@ -197,12 +197,13 @@ function availableSupply(resistance, states, t, sc, settings) {
   return DISTRICTS.map((zone, index) => {
     const state = states[index];
     const switches = { ...state.switches };
+    const relayMode = state.relayMode;
     const localAlive = switches.localMcu && !(sc.offline?.district === zone.id && t >= sc.offline.t);
     const sourceEnabled = localAlive || settings.takeover;
     const loadScale = settings.loadScale * state.loadScale;
     const rUser = Math.max(1, (state.resistance ?? resistance[index]) / loadScale);
     const services = SERVICES[zone.id].map((service) => ({ ...service, enabled: state.services[service.id] !== false }));
-    const connectedShare = switches.load ? sum(services.filter(({ enabled }) => enabled).map(({ share }) => share)) : 0;
+    const connectedShare = switches.load ? Math.min(1,sum(services.filter(({ enabled }) => enabled).map(({ share }) => share))) : 0;
     const actualResistance = connectedShare > EPSILON ? rUser / connectedShare : Infinity;
     const demand = LIMITS.nominalVoltage ** 2 / actualResistance;
     const irradiance = state.irradiance ?? settings.irradiance;
@@ -226,7 +227,7 @@ function availableSupply(resistance, states, t, sc, settings) {
     const effectiveDemand = state.shed ? Math.min(loadLimit, demand) : demand;
     const record = {
       ...zone, soc: state.soc, rUser, actualResistance, effectiveDemand, demand, localAlive, sourceEnabled,
-      switches, loadScale, irradiance, temperature, connectedShare, services,
+      switches, relayMode, loadScale, irradiance, temperature, connectedShare, services,
       available, batteryCapacity, pvCapacity, localTarget, request: state.request, heavy: state.heavy, shed: state.shed,
       owner: localAlive ? "LOCAL" : settings.takeover ? "MAIN" : "OFFLINE",
       relay: false, donor: false, imported: 0, exported: 0, generator: 0, pv: 0, battery: 0,
@@ -268,6 +269,22 @@ function dispatch(districts, pair, settings, t) {
       Math.max(0, donor.available - donor.effectiveDemand));
     donor.exported = receiver.imported = watts;
     if (watts > EPSILON) flows.push({ from: donor.id, to: receiver.id, watts, type: "relay" });
+  }
+  if (t >= RELAY_ARM_TIME) {
+    for (const zone of districts) zone.relay = zone.relayMode === 1 || (zone.relayMode !== 0 && zone.relay);
+    for (const receiver of districts.filter(zone => zone.relay && zone.sourceEnabled)) {
+      for (const donor of districts.filter(zone => zone.relay && zone !== receiver && zone.sourceEnabled)) {
+        if (receiver.relayMode !== 1 && donor.relayMode !== 1) continue;
+        const deficit = receiver.effectiveDemand - receiver.available - receiver.imported;
+        const spare = donor.available - donor.effectiveDemand - donor.exported;
+        const watts = Math.min(deficit,spare);
+        if(watts <= EPSILON) continue;
+        donor.exported += watts;
+        receiver.imported += watts;
+        donor.donor = true;
+        flows.push({from:donor.id,to:receiver.id,watts,type:"relay"});
+      }
+    }
   }
   let availableGenerator = settings.generator && t >= RELAY_ARM_TIME ? GENERATOR_PREVIEW_LIMIT : 0;
   for (const zone of districts) {
@@ -323,6 +340,7 @@ function normalizeInterventions(interventions) {
       Number.isFinite(entry[key]) ? [[key, clamp(entry[key], min, max)]] : []));
     const service = SERVICES[entry.district].find(({ id }) => id === entry.service);
     return [{ t, zoneIndex, district: entry.district, switches, loadScale, inputs,
+      relayMode: [0,1,2].includes(entry.relayMode) ? entry.relayMode : null,
       service: service && typeof entry.enabled === "boolean" ? service : null, enabled: entry.enabled }];
   }).sort((a, b) => a.t - b.t);
 }
@@ -333,8 +351,14 @@ function applyIntervention(entry, states, events) {
   for (const [name, enabled] of Object.entries(entry.switches)) {
     if (state.switches[name] === enabled) continue;
     state.switches[name] = enabled;
+    if (name === "relay") state.relayMode = enabled ? 2 : 0;
     const onLabel = name === "localMcu" ? "returned to scenario control" : "connected";
     messages.push(`${switchLabels[name]} ${enabled ? onLabel : "isolated"}`);
+  }
+  if (entry.relayMode !== null && entry.relayMode !== state.relayMode) {
+    state.relayMode = entry.relayMode;
+    state.switches.relay = entry.relayMode !== 0;
+    messages.push(`Relay_manual = ${entry.relayMode} (${["open","closed","auto"][entry.relayMode]})`);
   }
   if (entry.loadScale !== null && entry.loadScale !== state.loadScale) {
     state.loadScale = entry.loadScale;
@@ -417,14 +441,15 @@ export function simulate(options = {}) {
   const current = sc ?? SCENARIOS[0];
   const settings = {
     sharing: options.sharing !== false,
-    takeover: options.takeover !== false,
+    mainEnabled: options.mainEnabled !== false,
+    takeover: options.takeover !== false && options.mainEnabled !== false,
     generator: options.generator !== false,
     loadScale: Number.isFinite(options.loadScale) ? clamp(options.loadScale, .25, 3) : 1,
     irradiance: Number.isFinite(options.irradiance) ? clamp(options.irradiance, 0, 1000) : LIMITS.irradiance,
   };
   const interventions = normalizeInterventions(options.interventions);
   const states = current.soc.map((soc) => ({ soc, voltage: LIMITS.nominalVoltage, request: false, heavy: false, shed: false,
-    loadScale: 1, temperature: LIMITS.temperature, services: {},
+    loadScale: 1, temperature: LIMITS.temperature, services: {}, relayMode: 2,
     switches: { pv: true, battery: true, relay: true, localMcu: true, load: true, generator: true } }));
   const events = [
     makeEvent(0, "scenario", current.title, current.description),
