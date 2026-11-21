@@ -9,7 +9,7 @@ import { LIMITS } from './model.mjs?v=layers-1';
 import { buildField, surfaceTexture } from './field.mjs?v=layers-1';
 import { createExplorer } from './explore.mjs?v=living-grid-2';
 import { span, tower, createWaterNetwork } from './infrastructure.mjs?v=layers-1';
-import { createControlLayer } from './control-layer.mjs?v=layers-1';
+import { CONTROL_ALTITUDE, createControlLayer } from './control-layer.mjs?v=camera-1';
 
 const ZONES = [
   { id: 'MG1', name: 'CRITICAL', tint: 0xf3aac6, site: [29, -24], asset: 'hospital', height: 13, width: 26 },
@@ -804,15 +804,15 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     redraw = true;
   }
 
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 560);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.06, 700);
   camera.position.set(104, 103, 125);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.075;
-  controls.minDistance = 22;
-  controls.maxDistance = 396;
+  controls.minDistance = 5;
+  controls.maxDistance = 460;
   controls.maxPolarAngle = Math.PI / 2.20;
-  controls.zoomSpeed = 0.88;
+  controls.zoomSpeed = 1.1;
   controls.rotateSpeed = 0.66;
   controls.screenSpacePanning = true;
   controls.target.set(0, 3.0, 5);
@@ -977,11 +977,19 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   function resetView() {
     streetCamera = false;
     explorer.setMode("orbit");
-    controls.target.set(0, activeNetwork==="controls"?13:3.4, 4);
+    controls.target.set(0, activeNetwork==="controls"?CONTROL_ALTITUDE*.56:3.4, 4);
     const narrow = Math.max(1, 1.36 / Math.max(0.45, camera.aspect));
-      const distance = Math.min(365, 176 * narrow);
+    const distance = Math.min(420, (activeNetwork==="controls"?190:176) * narrow);
     camera.position.copy(controls.target).addScaledVector(viewDirection, distance);
     controls.update();
+  }
+
+  function zoomCamera(factor) {
+    const offset=camera.position.clone().sub(controls.target);
+    const distance=bounded(offset.length()*factor,controls.minDistance,controls.maxDistance);
+    camera.position.copy(controls.target).add(offset.setLength(distance));
+    controls.update();
+    redraw=true;
   }
 
   function resize() {
@@ -1062,6 +1070,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     if (redraw || fieldMoving || controlMoving || (utilities && liveFlows.length && !reduceMotion.matches)) {
       for (const {sign} of districts.values()) sign.visible = labels && !streetCamera && utilities;
       for (const {badge} of stations.values()) badge.visible = labels && !streetCamera && utilities;
+      sky.position.copy(camera.position);
       renderer.render(scene, camera);
       redraw = false;
     }
@@ -1092,6 +1101,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     update,
     select,
     resetView,
+    zoomCamera,
     setDaylight,
     setCamera(mode) {
       streetCamera = mode === "walk";

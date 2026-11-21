@@ -6,7 +6,7 @@ const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
   "scenario-list", "scenario-description", "scenario-events", "sharing", "takeover",
   "generator", "load-scale", "load-scale-value", "restore-controls", "city-canvas",
-  "scene-status", "focus-view", "reset-view", "play", "reset-time", "time", "clock", "node-list",
+  "scene-status", "focus-view", "reset-view", "zoom-in", "zoom-out", "play", "reset-time", "time", "clock", "node-list",
   "node-id", "node-title", "node-description", "node-metrics", "node-state", "monitor",
   "figure-scenario", "figure-gallery", "plot-link", "plot-image",
   "district-control", "district-form", "district-message", "clear-events", "fault-status",
@@ -487,6 +487,12 @@ elements["focus-view"].addEventListener("click", () => {
   elements["camera-mode"].value = "orbit";
   state.scene?.select(state.selected, { focus: true });
 });
+for (const [id,factor] of [["zoom-in",.72],["zoom-out",1/.72]]) {
+  elements[id].addEventListener("click", () => {
+    if (elements["camera-mode"].value !== "orbit") elements["reset-view"].click();
+    state.scene?.zoomCamera(factor);
+  });
+}
 elements["camera-mode"].addEventListener("change", (event) => state.scene?.setCamera(event.target.value));
 elements.graphics.addEventListener("change", (event) => state.scene?.setQuality(event.target.value));
 elements["clean-hud"].addEventListener("click", () => {
@@ -592,17 +598,20 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=layers-2").then(({ mountCity }) => {
+import("./city.mjs?v=camera-1").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {
       elements["scene-status"].textContent = message || "";
       elements["scene-status"].hidden = kind === "ready";
       if (assets) elements["city-canvas"].dataset.loadedModels = assets.join(",");
-      if (kind === "error") elements["reset-view"].disabled = elements["focus-view"].disabled = elements.daylight.disabled = true;
+      if (kind === "error") {
+        for(const id of ["reset-view","focus-view","zoom-in","zoom-out","daylight"]) elements[id].disabled=true;
+      }
     },
   });
   elements["reset-view"].disabled = elements["focus-view"].disabled = elements.daylight.disabled = !state.scene;
+  elements["zoom-in"].disabled = elements["zoom-out"].disabled = !state.scene;
   elements["camera-mode"].disabled = elements.graphics.disabled = !state.scene;
   byId("mcu-layer").disabled=!state.scene;
   if (state.scene && matchMedia("(pointer: coarse)").matches) {

@@ -16,7 +16,7 @@
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}
   </script>
-  <script type="module" src="./studio.mjs?v=layers-2"></script>
+  <script type="module" src="./studio.mjs?v=camera-1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -95,6 +95,8 @@
           <div class="view-tools">
             <span class="view-name">CITY VIEW <span> / </span> 12 V DC NETWORK</span>
             <div class="camera-controls">
+              <button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in" disabled>+</button>
+              <button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out" disabled>−</button>
               <button id="focus-view" type="button" disabled>Focus selection</button>
               <button id="reset-view" type="button" disabled>City overview</button>
             </div>

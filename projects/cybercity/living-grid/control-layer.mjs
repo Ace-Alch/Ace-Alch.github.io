@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
-const altitude=18.4;
+export const CONTROL_ALTITUDE = 32;
+const altitude=CONTROL_ALTITUDE;
 const controlColors={status:0x71d7f1,command:0xffcb78,fault:0xe78f7c};
 const center=[0,altitude,42];
 
