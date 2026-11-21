@@ -31,7 +31,8 @@
       "focus": "The thesis studies local control and supervisory decisions in a four-bus architecture. Read the published study or explore the browser demo.",
       "name": "Research notebook",
       "label": "Explore the microgrids"
-    }
+    },
+    "banner": "/banners/MasterThesis2026.webp"
   },
   {
     "slug": "Inertia-Control-Studio",
@@ -101,7 +102,8 @@
       "focus": "The study brings PV, batteries, CHP, and demand into one Simulink model. The demo lets visitors examine the power balance.",
       "name": "Field view",
       "label": "Explore the feeder"
-    }
+    },
+    "banner": "/banners/hypersim-simulink-distribution.webp"
   },
   {
     "slug": "microgrid-prototype",
@@ -121,7 +123,8 @@
       "focus": "Follow the prototype through sensing, switching, and connection points.",
       "name": "System sequence",
       "label": "Inspect the prototype"
-    }
+    },
+    "banner": "/banners/microgrid-prototype.webp"
   },
   {
     "slug": "smart-hospital-bed",
@@ -177,7 +180,8 @@
       "focus": "The browser workbench lets visitors place components, connect a circuit, and examine the behavior.",
       "name": "Lab bench",
       "label": "Open the circuit lab"
-    }
+    },
+    "banner": "/banners/circuit-lab.webp"
   },
   {
     "slug": "nasir-driving-simulator",
@@ -264,7 +268,8 @@
       "focus": "The demo shows how embedded Linux links USB input with a Bluetooth HID output.",
       "name": "Signal path",
       "label": "Trace an input event"
-    }
+    },
+    "banner": "/banners/bluetooth-hid.webp"
   },
   {
     "slug": "GPU-Accelerated-Satellite-Sim",
@@ -473,7 +478,8 @@
       "name": "Product flow",
       "label": "Try a sample"
     },
-    "demo": "/apps/project-demo/index.html?project=shiftfolio&v=2"
+    "demo": "/apps/project-demo/index.html?project=shiftfolio&v=2",
+    "banner": "/banners/shiftfolio.webp"
   },
   {
     "slug": "telegram-bot",
@@ -493,7 +499,8 @@
       "focus": "The demo traces relay decisions through filtering, queueing, and delivery.",
       "name": "Signal path",
       "label": "Run the relay demo"
-    }
+    },
+    "banner": "/banners/telegram-bot.webp"
   },
   {
     "slug": "esp32-labs",
@@ -522,6 +529,7 @@
       "label": "Open ESP32 Labs"
     },
     "demo": "/esp32-labs/",
-    "details": "https://github.com/Ace-Alch/esp32-labs"
+    "details": "https://github.com/Ace-Alch/esp32-labs",
+    "banner": "/banners/esp32-labs.webp"
   }
 ]

@@ -23,7 +23,7 @@
     if (!anchor || anchor === mounted || anchor === pending) return;
     pending = anchor;
     try {
-      const response = await fetch('/archive/projects.json?v=engineering');
+      const response = await fetch('/archive/projects.json?v=project-covers');
       if (!response.ok) throw Error('Project data unavailable');
       const records = await response.json();
       if (!anchor.isConnected || pending !== anchor) return;
