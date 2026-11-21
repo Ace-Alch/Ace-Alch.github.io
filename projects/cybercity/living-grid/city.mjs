@@ -22,7 +22,6 @@ const SYSTEM = {
   DAQ: { site: [24, 54], tint: 0x8fe4b4, name: 'MONITORING / DAQ' },
 };
 const SHARING_BUS = [0, 1.64, 0];
-const GENERATOR_BUS = [0, 1.17, 7];
 const POWER_COLOR = 0x79f1ee;
 const GEN_COLOR = 0xffba6b;
 const BASIS = 'https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/libs/basis/';
@@ -130,7 +129,7 @@ function makeBadge(id, name, tint, big = true) {
   const map = new THREE.CanvasTexture(canvas);
   map.colorSpace = THREE.SRGBColorSpace;
   const badge = new THREE.Sprite(new THREE.SpriteMaterial({ map, depthTest: false, depthWrite: false, transparent: true, toneMapped: false }));
-  badge.scale.set(big ? 24 : 19, big ? 4.77 : 3.08, 1);
+  badge.scale.set(big ? 15 : 12.8, big ? 2.98 : 2.07, 1);
   badge.renderOrder = 9;
   return badge;
 }
@@ -834,6 +833,8 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   let down = null;
   let animation;
   let viewStarted = false;
+  let labels = true;
+  let streetCamera = false;
   let frameData;
   let liveFlows = [];
   let redraw = true;
@@ -919,6 +920,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     selected = id;
     recolor();
     if (focus) {
+      streetCamera = false;
       explorer.setMode("orbit");
       const site = ZONES.find((zone) => zone.id === id)?.site ?? SYSTEM[id]?.site;
       if (!site) return;
@@ -931,6 +933,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   }
 
   function resetView() {
+    streetCamera = false;
     explorer.setMode("orbit");
     controls.target.set(0, 3.4, 4);
     const narrow = Math.max(1, 1.36 / Math.max(0.45, camera.aspect));
@@ -1000,6 +1003,8 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     let fieldMoving = water.animate(now,reduceMotion.matches);
     for (const { field } of districts.values()) fieldMoving = field.animate(now, reduceMotion.matches) || fieldMoving;
     if (redraw || fieldMoving || (liveFlows.length && !reduceMotion.matches)) {
+      for (const {sign} of districts.values()) sign.visible = labels && !streetCamera;
+      for (const {badge} of stations.values()) badge.visible = labels && !streetCamera;
       renderer.render(scene, camera);
       redraw = false;
     }
@@ -1031,7 +1036,12 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     select,
     resetView,
     setDaylight,
-    setCamera(mode) { if (mode === "orbit") resetView(); else explorer.setMode(mode); },
+    setCamera(mode) {
+      streetCamera = mode === "walk";
+      if (mode === "orbit") resetView(); else explorer.setMode(mode);
+      redraw = true;
+    },
+    setLabels(visible) { labels = visible; redraw = true; },
     setQuality,
     dispose() {
       disposed = true;

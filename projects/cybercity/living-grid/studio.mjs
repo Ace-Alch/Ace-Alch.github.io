@@ -459,6 +459,7 @@ elements["clean-hud"].addEventListener("click", () => {
   const minimal = elements["city-frame"].classList.toggle("clean-hud");
   elements["clean-hud"].setAttribute("aria-pressed", String(minimal));
   elements["clean-hud"].textContent = minimal ? "Show HUD" : "Clear HUD";
+  state.scene?.setLabels(!minimal);
 });
 byId("water-drill").addEventListener("click", () => {
   setScenario("I");
@@ -545,7 +546,7 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=utilities-1").then(({ mountCity }) => {
+import("./city.mjs?v=utilities-2").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {
