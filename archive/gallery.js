@@ -1,7 +1,7 @@
 (() => {
   let mounted;
   let pending;
-  const featured = ['Inertia-Control-Studio', 'circuit-lab', 'smart-hospital-bed',
+  const featured = ['Inertia-Control-Studio', 'circuit-lab', 'esp32-labs', 'smart-hospital-bed',
     'hypersim-simulink-distribution', 'microgrid-prototype', 'bluetooth-hid', 'telegram-bot', 'MasterThesis2026', 'Sounder', 'LED-Matrix-Game', 'GPU-Accelerated-Satellite-Sim', 'CAD_FPV_Drone'];
   const element = (tag, className, text) => {
     const item = document.createElement(tag);
@@ -25,7 +25,7 @@
     if (!anchor || anchor === mounted || anchor === pending) return;
     pending = anchor;
     try {
-      const response = await fetch('/archive/projects.json?v=folio');
+      const response = await fetch('/archive/projects.json?v=esp32-labs');
       if (!response.ok) throw Error('Project data unavailable');
       const data = await response.json();
       if (!anchor.isConnected || pending !== anchor) return;
