@@ -11,12 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./studio.css?v=living-grid-1">
-  <link rel="stylesheet" href="./game.css?v=utilities-1">
+  <link rel="stylesheet" href="./game.css?v=layers-1">
   <link rel="stylesheet" href="./monitor.css">
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}
   </script>
-  <script type="module" src="./studio.mjs?v=utilities-2"></script>
+  <script type="module" src="./studio.mjs?v=layers-1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -84,6 +84,7 @@
         <div class="view-select" aria-label="City display">
           <button id="city-mode" type="button" aria-pressed="true">3D City</button>
           <button id="line-mode" type="button" aria-pressed="false">Electrical view</button>
+          <button id="mcu-layer" type="button" aria-pressed="false" disabled>MCU signal layer</button>
           <button id="wide-view" type="button" aria-pressed="false">Expand view</button>
           <button id="daylight" type="button" aria-pressed="true" disabled>Daylight</button>
           <button id="clean-hud" type="button" aria-pressed="false">Clear HUD</button>
@@ -112,10 +113,15 @@
           <div class="view-key" aria-label="Power path legend">
             <span><i class="key-relay"></i> Relay support</span>
             <span><i class="key-generator"></i> Generator supply</span>
+            <span><i class="key-pv"></i> PV to bus</span>
+            <span><i class="key-battery"></i> Battery ↔ bus</span>
+            <span><i class="key-water"></i> Water</span>
           </div>
+          <div class="signal-key" id="signal-key" hidden><span>Blue · local status to Main</span><span>Amber · supervisory commands</span></div>
           <p class="camera-help">Drag to orbit · Scroll or pinch to zoom</p>
         </div>
         <div class="diagram" id="diagram" hidden></div>
+        <section id="air-signals" class="air-signals" aria-label="MCU signal status" hidden></section>
         <div class="transport">
           <button id="play" type="button">Run scenario</button>
           <button id="reset-time" type="button">Restart</button>

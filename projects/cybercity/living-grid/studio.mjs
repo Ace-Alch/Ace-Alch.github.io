@@ -1,4 +1,4 @@
-import { DISTRICTS, LIMITS, SCENARIOS, sampleAt, simulate } from "./model.mjs?v=utilities-1";
+import { DISTRICTS, LIMITS, SCENARIOS, sampleAt, simulate } from "./model.mjs?v=layers-1";
 import { createMonitor } from "./monitor.mjs";
 import { createSingleLine } from "./single-line.mjs?v=utilities-1";
 
@@ -48,6 +48,7 @@ const state = {
   scene: null,
   interventions: [],
   mainEnabled: true,
+  controlLayer: false,
 };
 
 const objectives = {
@@ -195,6 +196,36 @@ function renderUtilities(frame) {
   const relay=frame.flows.filter(({type})=>type==="relay").map(({from,to,watts})=>`${from} → ${to} ${watts.toFixed(1)} W`);
   const water=pump.served>.025?"Water supplied to four districts":"Water supply stopped";
   byId("utility-flow").textContent=`${water} · ${relay.length?relay.join(" / "):"No relay transfer"} · Generator ${frame.totals.generator.toFixed(1)} W`;
+}
+
+const airSignals=byId("air-signals");
+let renderedSignals="";
+function renderAirSignals(frame) {
+  if(!state.controlLayer || elements["city-frame"].hidden) return;
+  const main=state.mainEnabled
+    ? frame.support?.receiver ? `${frame.support.receiver} · ${frame.support.reason || "Support request received"}` : "Main MCU monitoring all districts"
+    : "Main MCU disabled";
+  const entries=frame.districts.map(zone=>{
+    const power=zone.localAlive?"Local MCU online":zone.owner==="MAIN"?"Main takeover":"Local MCU offline";
+    const command=zone.mainCommand==="NONE"?"No override":zone.mainCommand;
+    const switches=["battery","pv","load","generator"].map(key=>Number(zone.switches[key]&&zone.sourceEnabled)).join("");
+    return [zone.id,`${power} · Request ${Number(zone.request)} · Relay ${zone.relay?"closed":"open"} · SW1–4 ${switches} · ${command}`];
+  });
+  const signature=JSON.stringify([main,entries]);
+  if(renderedSignals===signature) return;
+  renderedSignals=signature;
+  const heading=document.createElement("h3");
+  heading.textContent=main;
+  const roles=document.createElement("p");
+  roles.textContent="Local MCUs read voltage, charge and load, then set source switches or request support. The Main MCU selects donors, commands relays, limits load and takes over failed local control.";
+  const list=document.createElement("dl");
+  for(const [id,status] of entries) {
+    const row=document.createElement("div"), title=document.createElement("dt"), value=document.createElement("dd");
+    title.textContent=id;
+    value.textContent=status;
+    row.append(title,value);list.append(row);
+  }
+  airSignals.replaceChildren(heading,roles,list);
 }
 
 function setScenario(id) {
@@ -385,9 +416,10 @@ function renderInspector(frame) {
 function render() {
   if (!state.run) return;
   const frame = sampleAt(state.run, state.time);
+  renderAirSignals(frame);
   renderUtilities(frame);
   renderMission();
-  state.scene?.update(frame);
+  state.scene?.update(frame,state.mainEnabled);
   if (!elements.diagram.hidden) singleLine.update(frame, state.selected);
   monitor.render({ time: frame.t, selectedZone: state.selected.startsWith("MG") ? state.selected : undefined });
   renderInspector(frame);
@@ -489,11 +521,23 @@ for (const [id, useCity] of [["city-mode", true], ["line-mode", false]]) {
   elements[id].addEventListener("click", () => {
     elements["city-frame"].hidden = !useCity;
     elements.diagram.hidden = useCity;
+    airSignals.hidden=!useCity || !state.controlLayer;
     elements["city-mode"].setAttribute("aria-pressed", String(useCity));
     elements["line-mode"].setAttribute("aria-pressed", String(!useCity));
     render();
   });
 }
+byId("mcu-layer").addEventListener("click", () => {
+  state.controlLayer=!state.controlLayer;
+  const enabled=state.controlLayer;
+  byId("mcu-layer").setAttribute("aria-pressed",String(enabled));
+  elements["city-frame"].classList.toggle("control-network",enabled);
+  byId("signal-key").hidden=!enabled;
+  state.scene?.setNetwork(enabled?"controls":"utilities");
+  elements["city-mode"].click();
+  if(enabled)elements["reset-view"].click();
+  render();
+});
 elements["wide-view"].addEventListener("click", () => {
   const expanded = byId("city").classList.toggle("wide-view");
   elements["wide-view"].setAttribute("aria-pressed", String(expanded));
@@ -546,7 +590,7 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=utilities-2").then(({ mountCity }) => {
+import("./city.mjs?v=layers-1").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {
@@ -558,6 +602,7 @@ import("./city.mjs?v=utilities-2").then(({ mountCity }) => {
   });
   elements["reset-view"].disabled = elements["focus-view"].disabled = elements.daylight.disabled = !state.scene;
   elements["camera-mode"].disabled = elements.graphics.disabled = !state.scene;
+  byId("mcu-layer").disabled=!state.scene;
   if (state.scene && matchMedia("(pointer: coarse)").matches) {
     elements.graphics.value = "medium";
     state.scene.setQuality("medium");

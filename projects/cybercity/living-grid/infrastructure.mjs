@@ -45,25 +45,33 @@ export function createWaterNetwork(parent, districts, h) {
   const { box, cylinder, material, luminous, tube, tag } = h;
   const root=tag(new THREE.Group(),"MG2","cooling");
   parent.add(root);
-  const manifold=[-2,1.11,-15.2], inlet=[-10.0,1.65,-17.7];
-  const pipe=material(0x4d7b85,.43,.52), blue=luminous(0x5ad9eb,.85);
+  const manifold=[-2,1.02,-15.2], inlet=[-10.0,1.65,-17.7];
+  const pipe=material(0x31565e,.41,.56), blue=luminous(0x62d8f2,.74);
   const base=material(0x475557,.83,.38), body=material(0x367b91,.46,.55);
   box(root,base,-2,.77,-15.2,3.7,.57,3.15);
   cylinder(root,body,-2,2.15,-15.2,1.03,1.03,2.48,24);
   cylinder(root,base,-2,3.46,-15.2,.56,.92,.26,20);
-  const network=[tube(root,[inlet,[-7,1.11,-17.7],[-7,1.11,-15.2],manifold],.22,pipe)];
-  for(const [id,zone] of districts) {
+  const north=[-2,1.02,-17.25], south=[-2,1.02,30.75];
+  const network=[
+    tube(root,[inlet,[-7,1.02,-17.7],[-7,1.02,-15.2],manifold],.16,pipe),
+    tube(root,[manifold,north],.16,pipe),
+    tube(root,[manifold,south],.16,pipe),
+  ];
+  for(const zone of districts.values()) {
     const { x, z }=zone.root.position;
-    const east=x>0;
-    const local=[x+19.1,1.65,z+6.3];
-    const corridor=east?3.4:-4.5;
-    const junction=[local[0]+(east ? 2.8 : 1.3),1.05,local[2]-1.05];
-    const connection=tube(root,[manifold,[corridor,1.03,-15.2],[corridor,1.03,local[2]-1.05],junction,local],.19,pipe);
-    network.push(connection);
-    cylinder(root,body,junction[0],1.3,junction[2],.31,.39,.50,14);
+    // The pump district shares the north inlet. Its service branch leaves the
+    // manifold in the opposite direction from the pump's supply connection.
+    const header=z<0?north:south;
+    const stopX=x+19.1;
+    const junction=[stopX,header[1],header[2]];
+    const local=[stopX,1.65,z+6.3];
+    if(x<0&&z<0) continue;
+    network.push(tube(root,[header,junction,[stopX,1.02,local[2]],local],.115,pipe));
+    cylinder(root,body,junction[0],1.12,junction[2],.22,.26,.31,14);
   }
-  const beadGeometry=new THREE.SphereGeometry(.16,8,6);
-  const markers=network.map(({path}) => [path, Array.from({length:10},()=> {
+  const beadGeometry=new THREE.CapsuleGeometry(.085,.68,2,6);
+  const axis=new THREE.Vector3(0,1,0);
+  const markers=network.map(({path}) => [path, Array.from({length:Math.max(1,Math.floor(path.getLength()/8))},()=> {
     const particle=new THREE.Mesh(beadGeometry,blue);
     root.add(particle);
     particle.visible=false;
@@ -75,7 +83,11 @@ export function createWaterNetwork(parent, districts, h) {
     const show=flow>.025;
     for(const [path,series] of markers) for (const [i,bead] of series.entries()) {
       bead.visible=show;
-      if(show) bead.position.copy(path.getPointAt((i/series.length+(reduced ? 0 : now*.00013*flow))%1));
+      if(show) {
+        const f=(i/series.length+(reduced ? .2 : now*.0035*flow/path.getLength()))%1;
+        bead.position.copy(path.getPointAt(f));
+        bead.quaternion.setFromUnitVectors(axis,path.getTangentAt(f).normalize());
+      }
     }
     return show && !reduced;
   }

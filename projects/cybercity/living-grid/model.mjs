@@ -3,7 +3,7 @@
  * Scenario inputs and acceptance criteria come from the thesis, Chapter 6.
  * Dispatch is a steady-state power balance. It cannot reproduce SPS waveforms.
  */
-import { SERVICES } from "./services.mjs?v=utilities-1";
+import { SERVICES } from "./services.mjs?v=layers-1";
 
 export const LIMITS = Object.freeze({
   duration: 20,
@@ -203,7 +203,7 @@ function availableSupply(resistance, states, t, sc, settings) {
     const loadScale = settings.loadScale * state.loadScale;
     const rUser = Math.max(1, (state.resistance ?? resistance[index]) / loadScale);
     const services = SERVICES[zone.id].map((service) => ({ ...service, enabled: state.services[service.id] !== false }));
-    const connectedShare = switches.load ? sum(services.filter(({ enabled }) => enabled).map(({ share }) => share)) : 0;
+    const connectedShare = switches.load ? Math.min(1,sum(services.filter(({ enabled }) => enabled).map(({ share }) => share))) : 0;
     const actualResistance = connectedShare > EPSILON ? rUser / connectedShare : Infinity;
     const demand = LIMITS.nominalVoltage ** 2 / actualResistance;
     const irradiance = state.irradiance ?? settings.irradiance;

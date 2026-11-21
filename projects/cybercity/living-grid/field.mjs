@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { SERVICES } from "./services.mjs?v=utilities-1";
+import { SERVICES } from "./services.mjs?v=layers-1";
 
 function noise(seed) {
   return () => {
@@ -36,7 +36,7 @@ export function surfaceTexture(kind) {
 }
 
 export function buildField(parent, zone, h) {
-  const { place, box, cylinder, material, luminous, tag, tube, trees } = h;
+  const { place, box, cylinder, material, luminous, tag, tube, trees, assetMounts } = h;
   const field = new THREE.Group();
   parent.add(field);
   const dark = material(0x344650, .78, .35);
@@ -66,6 +66,43 @@ export function buildField(parent, zone, h) {
         box(field, x < -19 ? steel : wood, x, 1.09, z, 1.05, .77, 1.4);
       }
     }
+  }
+  const pale=material(0xc0b9a1,.82);
+  const asphalt=new THREE.MeshStandardMaterial({map:surfaceTexture("asphalt"),roughness:.95});
+  function paved(x,z,w,d,surface=pale) { box(field,surface,x,.72,z,w,.13,d); }
+  const slots=(x,z,count)=>{
+    paved(x,z,count*2.15+1,3.65,asphalt);
+    for(let i=0;i<=count;i++)box(field,pale,x+2.15*(i-count/2),.795,z,.075,.017,3.35,false);
+  };
+  if(zone.id==="MG1") {
+    slots(10.8,5.0,4);
+    paved(-9,3.7,12,3.4);
+    for(const side of [-1,1])for(let n=0;n<4;n++)box(field,steel,-9+side*5.7,1.51,2.5+n*.78,.13,1.42,.13);
+    const canopy=box(field,material(0x517483,.32,.46),-9,2.22,3.7,12.3,.18,3.1);
+    canopy.castShadow=true;
+    const handler=place(new THREE.Group(),-16.8,0,-2.5,field);
+    assetMounts.push({name:"airHandler",target:handler,height:1.65,width:3.65,depth:3.8});
+  } else if(zone.id==="MG2") {
+    paved(8.4,2.8,10.1,5.15,asphalt);
+    for(const edge of [-1,1]) for(let i=0;i<8;i++) {
+      box(field,steel,edge*21.8,1.3,-11.9+i*2.4,.14,1.62,.14);
+      if(i<7)box(field,steel,edge*21.8,1.58,-10.7+i*2.4,.07,.07,2.4,false);
+    }
+    for(let n=0;n<4;n++)box(field,material(0xb8964b,.78),4.1+n*1.1,.80,4.75,.51,.024,.17,false);
+  } else if(zone.id==="MG3") {
+    paved(0,4.9,21,2.35);
+    paved(-14.8,-6.4,7.3,8.2,material(0x7c705a,.92));
+    const seesaw=place(new THREE.Group(),-15,.83,-6.4,field);
+    assetMounts.push({name:"seesaw",target:seesaw,height:1.28,width:3.9,depth:2.5});
+    for(const x of [-9,-3,3,9]) cylinder(field,wood,x,.97,6.1,.35,.39,.40,12);
+  } else {
+    slots(-12.9,5.1,3);
+    for(const x of [-14.4,-6.8,5.6,13.2]) {
+      paved(x,2.7,2.8,7.2,asphalt);
+      box(field,wood,x+1.7,1,3.1,.33,.55,.63);
+    }
+    const unit=place(new THREE.Group(),-13.2,.8,-1,field);
+    assetMounts.push({name:"heatPump",target:unit,height:1.35,width:2.1,depth:2.6});
   }
 
   for (const service of SERVICES[zone.id]) {
@@ -125,11 +162,14 @@ export function buildField(parent, zone, h) {
     } else if (service.kind === "fan") {
       const accent=luminous(0x8ccac0,.6);
       const rotors=[];
+      const factory=zone.id==="MG2";
+      const enclosure=place(new THREE.Group(),factory?0:-15.2, factory?0:.35, factory?0:-1.18,root);
+      if(!factory)enclosure.scale.setScalar(.59);
       for(const x of [-1.8,2.6]) {
-        box(root,dark,x,2.75,5.35,3.1,3.1,.71);
+        box(enclosure,dark,x,2.75,5.35,3.1,3.1,.71);
         const rim = new THREE.Mesh(new THREE.TorusGeometry(1.28,.11,10,32),steel);
-        place(rim,x,2.75,5.76,root);
-        const rotor=place(new THREE.Group(),x,2.75,5.77,root);
+        place(rim,x,2.75,5.76,enclosure);
+        const rotor=place(new THREE.Group(),x,2.75,5.77,enclosure);
         rotors.push(rotor);
         for(let n=0;n<5;n++) {
           const spoke=place(new THREE.Group(),0,0,0,rotor);
@@ -139,10 +179,30 @@ export function buildField(parent, zone, h) {
         }
         const cap=cylinder(rotor,steel,0,0,.13,.26,.26,.19,18);
         cap.rotation.x=Math.PI/2;
-        box(root,accent,x+1.37,1.47,5.78,.16,.14,.08,false);
-        for(let i=0;i<7;i++) box(root,steel,x,1.66+i*.36,5.94,2.22,.026,.022,false);
+        box(enclosure,accent,x+1.37,1.47,5.78,.16,.14,.08,false);
+        for(let i=0;i<7;i++) box(enclosure,steel,x,1.66+i*.36,5.94,2.22,.026,.022,false);
       }
       effects.set(service.id,{ type:"fan",accent,rotors,power:0 });
+    } else if(service.kind==="charger" || service.kind==="compressor") {
+      const accent=luminous(0x83e8a7,.8);
+      if(service.kind==="charger") {
+        const xpos=zone.id==="MG1"?7:zone.id==="MG3"?8:-11.5;
+        for(const x of [xpos,xpos+2.25]) {
+          box(root,steel,x,.97,7.35,.60,.32,.70);
+          box(root,material(0xe1dfca,.56,.3),x,1.92,7.35,.52,1.83,.43);
+          box(root,dark,x,2.3,7.59,.40,.65,.06,false);
+          box(root,accent,x,2.47,7.63,.26,.11,.04,false);
+          tube(root,[[x+.24,2.28,7.5],[x+.56,1.11,7.52],[x+.83,1.31,7.53],[x+.78,2.2,7.52]],.045,dark,6);
+        }
+      } else {
+        const tank=cylinder(root,material(0x53838c,.39,.6),11.6,1.69,4.49,.71,.71,3.7,20);
+        tank.rotation.z=Math.PI/2;
+        box(root,steel,11.7,.91,4.49,4.05,.23,1.73);
+        box(root,dark,10.4,2.56,4.49,1.11,.51,.71);
+        box(root,accent,10.4,2.86,4.49,.3,.07,.21,false);
+        tube(root,[[10.85,2.66,4.49],[11.4,2.66,4.49],[11.4,2.35,4.49]],.07,steel,8);
+      }
+      effects.set(service.id,{type:service.kind,accent,power:0});
     } else {
       const isRoad = service.kind === "street";
       const accent = luminous(0xffe2a7, 1.4);
@@ -170,7 +230,8 @@ export function buildField(parent, zone, h) {
       f.power = service.demand > .001 ? Math.min(1, service.served / service.demand) : 0;
       if(f.type==="water" && !(zone.id==="MG2" && service.id==="cooling")) f.power=Math.min(f.power,waterSupply);
       f.accent.emissiveIntensity = f.power * 2.3;
-      f.accent.color.setHex(f.power > .025 ? (f.type === "water" ? waterColor : 0xffd580) : 0x3e494b);
+      f.accent.color.setHex(f.power > .025 ? (f.type === "water" ? waterColor :
+        ["charger","compressor","fan"].includes(f.type)?0x83e8a7:0xffd580) : 0x3e494b);
       if (f.water) f.water.object.visible = f.power > .025;
       if (f.cast) f.cast.intensity = daylight ? 0 : f.power*23;
       for (const part of f.parts ?? []) part.visible = f.power > .025;
