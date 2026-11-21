@@ -66,7 +66,10 @@
           <canvas id="city-canvas" aria-label="Interactive three-dimensional view of the four CyberCity microgrids"></canvas>
           <div class="view-tools">
             <span class="view-name">CITY VIEW <span> / </span> 12 V DC NETWORK</span>
-            <button id="reset-view" type="button" disabled>Reset camera</button>
+            <div class="camera-controls">
+              <button id="focus-view" type="button" disabled>Focus selection</button>
+              <button id="reset-view" type="button" disabled>City overview</button>
+            </div>
           </div>
           <p id="scene-status" class="scene-status" role="status">Preparing 3D city…</p>
           <p id="fault-status" class="fault-status" role="status" hidden></p>
@@ -74,6 +77,7 @@
             <span><i class="key-relay"></i> Relay support</span>
             <span><i class="key-generator"></i> Generator supply</span>
           </div>
+          <p class="camera-help">Drag to orbit · Scroll or pinch to zoom</p>
         </div>
         <div class="transport">
           <button id="play" type="button">Run scenario</button>

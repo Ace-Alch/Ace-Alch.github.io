@@ -707,7 +707,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   renderer.shadowMap.needsUpdate = true;
   renderer.setClearColor(0x0a141d, 1);
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a141d, 0.0039);
+  scene.fog = new THREE.FogExp2(0x0a141d, 0.0026);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const room = new RoomEnvironment();
   const environment = pmrem.fromScene(room, 0.04);
@@ -852,9 +852,10 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     if (focus) {
       const site = ZONES.find((zone) => zone.id === id)?.site ?? SYSTEM[id]?.site;
       if (!site) return;
-      const shift = new THREE.Vector3(site[0], 2.4, site[1]).sub(controls.target);
-      controls.target.add(shift);
-      camera.position.add(shift);
+      const direction = camera.position.clone().sub(controls.target).normalize();
+      controls.target.set(site[0], 3.6, site[1]);
+      const widthFactor = Math.max(1, 1.2 / Math.max(.5, camera.aspect));
+      camera.position.copy(controls.target).addScaledVector(direction, 63 * widthFactor);
       controls.update();
     }
   }

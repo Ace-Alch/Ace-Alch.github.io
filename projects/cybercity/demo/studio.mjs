@@ -5,7 +5,7 @@ const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
   "scenario-list", "scenario-description", "scenario-events", "sharing", "takeover",
   "generator", "load-scale", "load-scale-value", "restore-controls", "city-canvas",
-  "scene-status", "reset-view", "play", "reset-time", "time", "clock", "node-list",
+  "scene-status", "focus-view", "reset-view", "play", "reset-time", "time", "clock", "node-list",
   "node-id", "node-title", "node-description", "node-metrics", "node-state", "monitor",
   "figure-scenario", "figure-gallery", "plot-link", "plot-image",
   "district-control", "district-form", "district-message", "clear-events", "fault-status",
@@ -263,6 +263,7 @@ elements.play.addEventListener("click", () => {
 elements["reset-time"].addEventListener("click", () => seek(0));
 elements.time.addEventListener("input", () => seek(elements.time.value));
 elements["reset-view"].addEventListener("click", () => state.scene?.resetView());
+elements["focus-view"].addEventListener("click", () => state.scene?.select(state.selected, { focus: true }));
 for (const element of [elements.sharing, elements.takeover, elements.generator, elements["load-scale"]]) {
   element.addEventListener("change", configure);
 }
@@ -308,13 +309,14 @@ setScenario("I");
 import("./city.mjs").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
-    onStatus: ({ kind, message }) => {
+    onStatus: ({ kind, message, assets }) => {
       elements["scene-status"].textContent = message || "";
       elements["scene-status"].hidden = kind === "ready";
-      if (kind === "error") elements["reset-view"].disabled = true;
+      if (assets) elements["city-canvas"].dataset.loadedModels = assets.join(",");
+      if (kind === "error") elements["reset-view"].disabled = elements["focus-view"].disabled = true;
     },
   });
-  elements["reset-view"].disabled = !state.scene;
+  elements["reset-view"].disabled = elements["focus-view"].disabled = !state.scene;
   state.scene?.select(state.selected);
   render();
 }).catch((error) => {
