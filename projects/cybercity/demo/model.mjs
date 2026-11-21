@@ -3,6 +3,8 @@
  * Scenario inputs and acceptance criteria come from the thesis, Chapter 6.
  * Dispatch is a steady-state power balance. It cannot reproduce SPS waveforms.
  */
+import { SERVICES } from "./services.mjs";
+
 export const LIMITS = Object.freeze({
   duration: 20,
   evaluationStart: 2,
@@ -198,9 +200,16 @@ function availableSupply(resistance, states, t, sc, settings) {
     const localAlive = switches.localMcu && !(sc.offline?.district === zone.id && t >= sc.offline.t);
     const sourceEnabled = localAlive || settings.takeover;
     const loadScale = settings.loadScale * state.loadScale;
-    const actualResistance = Math.max(1, resistance[index] / loadScale);
+    const rUser = Math.max(1, (state.resistance ?? resistance[index]) / loadScale);
+    const services = SERVICES[zone.id].map((service) => ({ ...service, enabled: state.services[service.id] !== false }));
+    const connectedShare = switches.load ? sum(services.filter(({ enabled }) => enabled).map(({ share }) => share)) : 0;
+    const actualResistance = connectedShare > EPSILON ? rUser / connectedShare : Infinity;
     const demand = LIMITS.nominalVoltage ** 2 / actualResistance;
-    const pvCapacity = sourceEnabled && switches.pv ? PV_OPERATING_WATTS * (settings.irradiance / LIMITS.irradiance) : 0;
+    const irradiance = state.irradiance ?? settings.irradiance;
+    const temperature = state.temperature;
+    // Illustrative linear derating. The original PV semiconductor model lives in SPS.
+    const pvCapacity = sourceEnabled && switches.pv
+      ? PV_OPERATING_WATTS * (irradiance / LIMITS.irradiance) * (1 - .004 * (temperature - LIMITS.temperature)) : 0;
     const batteryCapacity = sourceEnabled && switches.battery
       ? Math.min(BATTERY_POWER_WATTS, state.soc * BATTERY_NOMINAL_ENERGY / (100 * STEP)) : 0;
     const available = pvCapacity + batteryCapacity;
@@ -216,7 +225,8 @@ function availableSupply(resistance, states, t, sc, settings) {
     state.shed = settings.generator && settings.takeover && state.shed && actualResistance < clearResistance;
     const effectiveDemand = state.shed ? Math.min(loadLimit, demand) : demand;
     const record = {
-      ...zone, soc: state.soc, actualResistance, effectiveDemand, demand, localAlive, sourceEnabled, switches, loadScale,
+      ...zone, soc: state.soc, rUser, actualResistance, effectiveDemand, demand, localAlive, sourceEnabled,
+      switches, loadScale, irradiance, temperature, connectedShare, services,
       available, batteryCapacity, pvCapacity, localTarget, request: state.request, heavy: state.heavy, shed: state.shed,
       owner: localAlive ? "LOCAL" : settings.takeover ? "MAIN" : "OFFLINE",
       relay: false, donor: false, imported: 0, exported: 0, generator: 0, pv: 0, battery: 0,
@@ -262,13 +272,13 @@ function dispatch(districts, pair, settings, t) {
   let availableGenerator = settings.generator && t >= RELAY_ARM_TIME ? GENERATOR_PREVIEW_LIMIT : 0;
   for (const zone of districts) {
     const { effectiveDemand, imported, exported, available, sourceEnabled, pvCapacity, batteryCapacity } = zone;
-    const generatorNeeded = sourceEnabled && effectiveDemand > available + imported;
+    const generatorNeeded = sourceEnabled && zone.switches.generator && effectiveDemand > available + imported;
     const targetVoltage = generatorNeeded ? LIMITS.sourceReferences.generator : LIMITS.sourceReferences.battery;
     const target = sourceEnabled ? effectiveDemand * (targetVoltage / LIMITS.nominalVoltage) ** 2 : 0;
     const localTarget = Math.max(0, target + exported - imported);
     zone.pv = Math.min(pvCapacity, localTarget);
     zone.battery = Math.min(batteryCapacity, Math.max(0, localTarget - zone.pv));
-    zone.generator = Math.min(availableGenerator, Math.max(0, localTarget - zone.pv - zone.battery));
+    zone.generator = zone.switches.generator ? Math.min(availableGenerator, Math.max(0, localTarget - zone.pv - zone.battery)) : 0;
     availableGenerator -= zone.generator;
     if (zone.generator > EPSILON) flows.push({ from: "GEN", to: zone.id, watts: zone.generator, type: "generator" });
     zone.served = Math.max(0, Math.min(zone.demand, zone.pv + zone.battery + zone.generator + imported - exported));
@@ -282,6 +292,11 @@ function dispatch(districts, pair, settings, t) {
     const activeCommand = zone.id === pair.receiver?.id && !!pair.reason && settings.sharing;
     zone.takeover = !zone.localAlive || activeCommand;
     zone.mainCommand = activeCommand ? (pair.donor ? "DONOR FOUND" : "NO SAFE DONOR") : zone.shed ? "LIMIT LOAD" : "NONE";
+    for (const service of zone.services) {
+      const fraction = zone.switches.load && service.enabled && zone.connectedShare ? service.share / zone.connectedShare : 0;
+      service.served = zone.served * fraction;
+      service.demand = zone.demand * fraction;
+    }
   }
   return flows;
 }
@@ -290,7 +305,9 @@ function makeEvent(t, type, title, detail, zone = null) {
   return { t, time: t, type, title, detail, zone };
 }
 
-const switchLabels = { pv: "PV path", battery: "Battery path", relay: "Relay path", localMcu: "Local MCU" };
+const switchLabels = { pv: "PV path", battery: "Battery path", relay: "Relay path", localMcu: "Local MCU",
+  load: "Demand switch", generator: "Generator feeder" };
+const setpoints = { resistance: [1, 100, " Ω"], irradiance: [0, 1000, " W/m²"], temperature: [-10, 70, " °C"] };
 
 function normalizeInterventions(interventions) {
   if (!Array.isArray(interventions)) return [];
@@ -302,8 +319,11 @@ function normalizeInterventions(interventions) {
     const switches = Object.fromEntries(Object.keys(switchLabels).flatMap((name) =>
       typeof entry[name] === "boolean" ? [[name, entry[name]]] : []));
     const loadScale = Number.isFinite(entry.loadScale) ? clamp(entry.loadScale, .25, 3) : null;
-    return loadScale !== null || Object.keys(switches).length
-      ? [{ t, zoneIndex, district: entry.district, switches, loadScale }] : [];
+    const inputs = Object.fromEntries(Object.entries(setpoints).flatMap(([key, [min, max]]) =>
+      Number.isFinite(entry[key]) ? [[key, clamp(entry[key], min, max)]] : []));
+    const service = SERVICES[entry.district].find(({ id }) => id === entry.service);
+    return [{ t, zoneIndex, district: entry.district, switches, loadScale, inputs,
+      service: service && typeof entry.enabled === "boolean" ? service : null, enabled: entry.enabled }];
   }).sort((a, b) => a.t - b.t);
 }
 
@@ -319,6 +339,14 @@ function applyIntervention(entry, states, events) {
   if (entry.loadScale !== null && entry.loadScale !== state.loadScale) {
     state.loadScale = entry.loadScale;
     messages.push(`requested demand factor ${entry.loadScale.toFixed(2)}×`);
+  }
+  for (const [key, value] of Object.entries(entry.inputs)) {
+    state[key] = value;
+    messages.push(`${key} set to ${value}${setpoints[key][2]}`);
+  }
+  if (entry.service) {
+    state.services[entry.service.id] = entry.enabled;
+    messages.push(`${entry.service.name} ${entry.enabled ? "on" : "off"}`);
   }
   if (messages.length) events.push(makeEvent(entry.t, "intervention", `${entry.district} manual intervention`,
     messages.join(". ") + ".", entry.district));
@@ -396,7 +424,8 @@ export function simulate(options = {}) {
   };
   const interventions = normalizeInterventions(options.interventions);
   const states = current.soc.map((soc) => ({ soc, voltage: LIMITS.nominalVoltage, request: false, heavy: false, shed: false,
-    loadScale: 1, switches: { pv: true, battery: true, relay: true, localMcu: true } }));
+    loadScale: 1, temperature: LIMITS.temperature, services: {},
+    switches: { pv: true, battery: true, relay: true, localMcu: true, load: true, generator: true } }));
   const events = [
     makeEvent(0, "scenario", current.title, current.description),
     makeEvent(2, "daq", "DAQ evaluation begins", "The active KPI interval is 2–20 s."),

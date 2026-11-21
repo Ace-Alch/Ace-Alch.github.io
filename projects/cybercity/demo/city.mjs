@@ -5,7 +5,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { LIMITS } from './model.mjs';
+import { LIMITS } from './model.mjs?v=street-lab-1';
+import { buildField, surfaceTexture } from './field.mjs?v=street-lab-1';
 
 const ZONES = [
   { id: 'MG1', name: 'CRITICAL', tint: 0xf3aac6, site: [29, -24], asset: 'hospital', height: 13, width: 26 },
@@ -165,7 +166,7 @@ function trees(parent, x, z, seed, variant = 1) {
 }
 
 function lane(parent, x, z, length, width, across = false) {
-  const asphalt = material(0x232b33, 0.95, 0.05);
+  const asphalt = new THREE.MeshStandardMaterial({ map: surfaceTexture("asphalt"), roughness: .95 });
   const kerb = material(0x63707a, 0.8);
   const marks = material(0xa1a9a5, 0.95);
   const dimensions = across ? [length, width] : [width, length];
@@ -395,8 +396,8 @@ function createDistrict(scene, zone, assetMounts) {
       cylinder(root, material(0x77848b, 0.31, 0.75), u * 22.1, 0.64, v * 17.8, 0.28, 0.31, 0.16, 12);
     }
   }
-  const garden = material(zone.id === 'MG2' ? 0x5c6261 : 0x3b5144, 0.94, 0.02);
-  tag(deck(root, garden, 0, 0.63, -5, 40, 22.3, 0.12, 1.25), zone.id, 'consumer');
+  const garden = new THREE.MeshStandardMaterial({ map: surfaceTexture(zone.id === 'MG2' ? "soil" : "grass"), roughness: .94 });
+  tag(deck(root, garden, 0, 0.63, -4.4, 44.1, 25, 0.12, 1.25), zone.id, 'consumer');
   lane(root, 0, 10.9, 44, 4.2, true);
   markings(root, -17.7, 10.9);
   markings(root, 16.8, 10.9);
@@ -445,7 +446,8 @@ function createDistrict(scene, zone, assetMounts) {
   const branchPos = [x + branch.position.x, 1.58, z + branch.position.z];
   tube(root, [[-14.8, 0.77, 14], [-14.8, 0.77, 13.55], [12.7, 0.77, 13.55], [12.7, 0.77, 15.8]], 0.065, material(0x3e6d76, 0.55), 6);
   tube(root, [[5.0, 0.81, 14.78], [5.0, 0.81, 14.45], [13.0, 0.81, 14.45]], 0.065, material(0x796b4e, 0.55), 6);
-  return { root, ring, status, busLight, solarLamp, sign, relay, energyLeds, branchPos };
+  const field = buildField(root, zone, { place, box, cylinder, material, luminous, tag, tube, trees });
+  return { root, ring, status, busLight, solarLamp, sign, relay, energyLeds, branchPos, field };
 }
 
 function tube(parent, points, radius, surface, sides = 8) {
@@ -730,6 +732,21 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   const rim = new THREE.DirectionalLight(0x7ef1cf, 0.56);
   rim.position.set(-55, 12, 28);
   scene.add(rim);
+  let daylight = true;
+  const daylightSky = 0x9fbdc5;
+  const nightSky = 0x0a141d;
+  function setDaylight(enabled) {
+    daylight = enabled;
+    const color = daylight ? daylightSky : nightSky;
+    renderer.setClearColor(color, 1);
+    scene.fog.color.setHex(color);
+    scene.fog.density = daylight ? .0015 : .0026;
+    key.intensity = daylight ? 3.2 : 1.25;
+    fill.intensity = daylight ? .88 : 1.3;
+    rim.intensity = daylight ? .34 : .65;
+    renderer.shadowMap.needsUpdate = true;
+    redraw = true;
+  }
 
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 560);
   camera.position.set(104, 103, 125);
@@ -744,7 +761,10 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   controls.screenSpacePanning = true;
   controls.target.set(0, 3.0, 5);
 
-  const floor = material(0x10202c, 0.94, 0.05);
+  const fieldTexture = surfaceTexture("grass").clone();
+  fieldTexture.repeat.set(160, 160);
+  fieldTexture.needsUpdate = true;
+  const floor = new THREE.MeshStandardMaterial({ color: 0x8d9d7c, map: fieldTexture, roughness: .96 });
   const stage = mesh(new THREE.PlaneGeometry(1100, 1100), floor, 0, -2.45, 0, scene, false);
   stage.rotation.x = -Math.PI / 2;
   const plinth = material(0x263748, 0.69, 0.27);
@@ -755,7 +775,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   const floorGrid = new THREE.GridHelper(260, 44, 0x284455, 0x223843);
   floorGrid.position.y = -2.37;
   floorGrid.material.transparent = true;
-  floorGrid.material.opacity = 0.41;
+  floorGrid.material.opacity = 0;
   scene.add(floorGrid);
   ovalTrack(scene);
 
@@ -813,6 +833,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     for (const name of highlights.keys()) if (!flows.has(name)) setHighlight(name, false, 0);
     liveFlows = [...flows];
     for (const [name, watts] of liveFlows) setHighlight(name, true, watts);
+    for (const row of data?.districts ?? []) districts.get(row.id)?.field.update(row);
     recolor();
   }
 
@@ -863,7 +884,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   function resetView() {
     controls.target.set(0, 3.4, 4);
     const narrow = Math.max(1, 1.36 / Math.max(0.45, camera.aspect));
-    const distance = Math.min(365, 183 * narrow);
+      const distance = Math.min(365, 176 * narrow);
     camera.position.copy(controls.target).addScaledVector(viewDirection, distance);
     controls.update();
   }
@@ -924,7 +945,9 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
         glint.position.copy(highlight.path.getPointAt(t));
       }
     }
-    if (redraw || (liveFlows.length && !reduceMotion.matches)) {
+    let fieldMoving = false;
+    for (const { field } of districts.values()) fieldMoving = field.animate(now, reduceMotion.matches) || fieldMoving;
+    if (redraw || fieldMoving || (liveFlows.length && !reduceMotion.matches)) {
       renderer.render(scene, camera);
       redraw = false;
     }
@@ -939,6 +962,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   canvas.addEventListener('pointerup', pointerUp);
   canvas.addEventListener('webglcontextlost', contextLost);
   resize();
+  setDaylight(true);
   recolor();
   animation = requestAnimationFrame(render);
   onStatus({ kind: 'ready', message: '3D city ready.' });
@@ -954,6 +978,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     update,
     select,
     resetView,
+    setDaylight,
     dispose() {
       disposed = true;
       cancelAnimationFrame(animation);

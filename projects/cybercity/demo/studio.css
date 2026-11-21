@@ -64,7 +64,42 @@ input[type=checkbox], input[type=range] { accent-color: #99ebce; }
 .experiment form label { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
 .experiment form select { max-width: 110px; background: var(--surface-alt); color: var(--ink); border: 1px solid var(--border); border-radius: 4px; font-size: .72rem; padding: 4px; }
 #district-message:empty { display: none; }
-.city-panel { overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.city-panel { overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.view-select { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.view-select button, .service-controls button, .flow-buttons button { padding: 6px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-alt); font-size: .76rem; }
+.view-select button[aria-pressed=true], .service-controls button[aria-pressed=true], .flow-buttons button[aria-pressed=true] { border-color: #69bda7; color: var(--mint); background: #a9fbd114; }
+.view-select #wide-view { margin-left: auto; }
+.workbench.wide-view { grid-template-columns: minmax(0, 1fr); }
+.wide-view .city-panel { grid-row: 1; }
+.wide-view .view-frame { min-height: min(75svh, 740px); }
+.wide-view .scenario-panel, .wide-view .inspector { grid-column: 1; }
+.service-controls { display: grid; gap: 5px; }
+.service-controls button, .flow-buttons button { display: flex; align-items: baseline; justify-content: space-between; gap: 7px; text-align: start; }
+.service-controls small, .flow-buttons small { font: .65rem var(--mono); color: var(--muted); white-space: nowrap; }
+.experiment form input[type=number] { width: 84px; padding: 4px 5px; background: var(--surface-alt); color: var(--ink); border: 1px solid var(--border); border-radius: 4px; font-size: .75rem; }
+.signal-values { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; font: .71rem var(--mono); margin: 10px 0 0; }
+.signal-values dt { color: var(--muted); }
+.signal-values dd { margin: 0; text-align: end; }
+.diagram { min-width: 0; padding: 14px clamp(9px,2vw,26px); }
+.flow-intro { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.flow-intro h2 { margin: 0; font: 700 2rem/1 var(--display); }
+.flow-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: .75rem; color: var(--muted); }
+.flow-legend i { display: inline-block; width: 10px; height: 3px; vertical-align: middle; background: #77ebd1; }
+.flow-legend span+span i { background: #f6c173; }
+.flow-readout { font: .8rem/1.5 var(--mono); color: var(--mint); margin: 9px 0 0; }
+.single-line { display: block; width: 100%; max-height: 340px; overflow: visible; }
+.single-line :is(path, circle) { fill: none; stroke: #688082; stroke-width: 1.7; }
+.single-line [data-blade] { stroke-width: 2.7; }
+.single-line .rail-label { font: 10px var(--mono); fill: #a6b7b6; }
+.single-line [data-zone] { cursor: pointer; }
+.single-line [data-node] { fill: #142227; stroke: #516b70; stroke-width: 1.2; }
+.single-line [data-selected] [data-node], .single-line [data-zone]:focus-visible [data-node] { stroke: var(--zone); stroke-width: 2.5; }
+.single-line :is([data-id],[data-voltage]) { text-anchor: middle; fill: #eaf4ef; font: 500 11px var(--mono); }
+.single-line [data-voltage] { fill: #adc4bf; font-size: 10px; }
+.single-line[data-sharing] .relay-rail, .single-line [data-relay] :is([data-path=relay],[data-blade]) { stroke: #77ebd1; stroke-width: 3; }
+.single-line[data-generating] .generator-rail, .single-line [data-generator] :is([data-path=generator],[data-diode]) { stroke: #f6c173; stroke-width: 3; }
+.flow-switches strong { display: block; margin-bottom: 6px; font-size: .86rem; }
+.flow-buttons { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,152px),1fr)); gap: 5px; }
 .view-frame { isolation: isolate; position: relative; min-height: clamp(380px, 60svh, 580px); background: radial-gradient(ellipse at 55% 45%, #21403c, #0c181b 72%); }
 .city-fallback, #city-canvas { width: 100%; height: 100%; position: absolute; inset: 0; }
 .city-fallback { z-index: -1; background: linear-gradient(180deg,#0d1c22a1,#0a1819a8), url("/banners/MasterThesis2026.webp") center / cover no-repeat; }

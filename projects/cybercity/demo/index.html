@@ -10,12 +10,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./studio.css?v=control-room-2">
+  <link rel="stylesheet" href="./studio.css?v=street-lab-1">
   <link rel="stylesheet" href="./monitor.css">
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}
   </script>
-  <script type="module" src="./studio.mjs?v=control-room-2"></script>
+  <script type="module" src="./studio.mjs?v=street-lab-1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -61,7 +61,13 @@
       </aside>
 
       <div class="city-panel">
-        <div class="view-frame">
+        <div class="view-select" aria-label="City display">
+          <button id="city-mode" type="button" aria-pressed="true">3D City</button>
+          <button id="line-mode" type="button" aria-pressed="false">Electrical view</button>
+          <button id="wide-view" type="button" aria-pressed="false">Expand view</button>
+          <button id="daylight" type="button" aria-pressed="true" disabled>Daylight</button>
+        </div>
+        <div class="view-frame" id="city-frame">
           <div class="city-fallback" aria-hidden="true"></div>
           <canvas id="city-canvas" aria-label="Interactive three-dimensional view of the four CyberCity microgrids"></canvas>
           <div class="view-tools">
@@ -79,6 +85,7 @@
           </div>
           <p class="camera-help">Drag to orbit · Scroll or pinch to zoom</p>
         </div>
+        <div class="diagram" id="diagram" hidden></div>
         <div class="transport">
           <button id="play" type="button">Run scenario</button>
           <button id="reset-time" type="button">Restart</button>
@@ -96,19 +103,28 @@
           <p id="node-description"></p>
           <div id="node-metrics" class="node-metrics"></div>
           <p id="node-state" class="node-state"></p>
+          <div id="service-controls" class="service-controls" aria-label="District equipment"></div>
           <details id="district-control" class="experiment">
-            <summary>Set a district event</summary>
-            <p>Schedule changes for the selected district at the current time.</p>
+            <summary>Simulink signal inputs</summary>
+            <p>Apply inputs to this district at the current time.</p>
             <form id="district-form">
-              <label>Demand <select name="loadScale"><option value="">Unchanged</option><option value=".65">65%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
-              <label>PV <select name="pv"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
-              <label>Battery <select name="battery"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
-              <label>Relay <select name="relay"><option value="">Unchanged</option><option value="false">Lock open</option><option value="true">Enable</option></select></label>
-              <label>Local MCU <select name="localMcu"><option value="">Unchanged</option><option value="false">Disconnect</option><option value="true">Enable</option></select></label>
+              <label>Ruser · Ω <input name="resistance" type="number" min="1" max="100" step="any" placeholder="Ω"></label>
+              <label>S · W/m² <input name="irradiance" type="number" min="0" max="1000" step="any" placeholder="W/m²"></label>
+              <label>TempC · °C <input name="temperature" type="number" min="-10" max="70" step="any" placeholder="°C"></label>
+              <label>SW1 Battery <select name="battery"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
+              <label>SW2 PV <select name="pv"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
+              <label>SW3 Demand path <select name="load"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
+              <label>SW4 Generator <select name="generator"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
+              <label>Relay manual <select name="relay"><option value="">Unchanged</option><option value="false">Lock open</option><option value="true">Auto</option></select></label>
+              <label>RPi_SW Local MCU <select name="localMcu"><option value="">Unchanged</option><option value="false">Disconnect</option><option value="true">Enable</option></select></label>
               <button type="submit">Apply event</button>
               <button id="clear-events" type="button">Clear custom events</button>
             </form>
             <p id="district-message" role="status"></p>
+          </details>
+          <details id="signal-panel" class="experiment">
+            <summary>Simulink signal outputs</summary>
+            <dl id="signal-values" class="signal-values"></dl>
           </details>
         </div>
         <a class="monitor-link" href="#monitor">Open monitoring</a>

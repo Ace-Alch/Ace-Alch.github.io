@@ -1,5 +1,6 @@
-import { DISTRICTS, LIMITS, SCENARIOS, sampleAt, simulate } from "./model.mjs";
+import { DISTRICTS, LIMITS, SCENARIOS, sampleAt, simulate } from "./model.mjs?v=street-lab-1";
 import { createMonitor } from "./monitor.mjs";
+import { createSingleLine } from "./single-line.mjs?v=street-lab-1";
 
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
@@ -9,6 +10,8 @@ const elements = Object.fromEntries([
   "node-id", "node-title", "node-description", "node-metrics", "node-state", "monitor",
   "figure-scenario", "figure-gallery", "plot-link", "plot-image",
   "district-control", "district-form", "district-message", "clear-events", "fault-status",
+  "city-mode", "line-mode", "wide-view", "daylight", "city-frame", "diagram",
+  "service-controls", "signal-panel", "signal-values",
 ].map((id) => [id, byId(id)]));
 
 const districtUses = {
@@ -47,6 +50,10 @@ const state = {
 const monitor = createMonitor(elements.monitor, {
   onSelectZone: (index) => selectNode(DISTRICTS[index]?.id),
   onSeek: seek,
+});
+const singleLine = createSingleLine(elements.diagram, selectNode, (key) => {
+  const district = activeDistrict();
+  if (district) manual({ [key]: !district.switches[key] });
 });
 
 function button(label, handler) {
@@ -141,6 +148,68 @@ function selectNode(id, component = null) {
   render();
 }
 
+function activeDistrict() {
+  return sampleAt(state.run, state.time).districts.find(({ id }) => id === state.selected);
+}
+
+function manual(values) {
+  const t = sampleAt(state.run, state.time).t;
+  state.interventions.push({ t, district: state.selected, ...values });
+  state.running = false;
+  configure();
+  elements["district-message"].textContent = `${state.selected} input applied at ${t.toFixed(2)} s.`;
+}
+
+let controlsZone = null;
+function renderServices(zone) {
+  if (controlsZone !== zone?.id) {
+    controlsZone = zone?.id;
+    elements["service-controls"].replaceChildren(...(zone?.services ?? []).map(({ id, name }) => {
+      const entry = button(name, () => {
+        const service = activeDistrict()?.services.find((item) => item.id === id);
+        if (service) manual({ service: id, enabled: !service.enabled });
+      });
+      entry.dataset.service = id;
+      entry.append(document.createElement("small"));
+      return entry;
+    }));
+  }
+  for (const [index, service] of (zone?.services ?? []).entries()) {
+    const control = elements["service-controls"].children[index];
+    control.setAttribute("aria-pressed", String(service.enabled));
+    control.toggleAttribute("data-current", state.component === service.id);
+    const label = service.demand > .05 ? `${asNumber(service.served)} W` : service.enabled ? "ISOLATED" : "OFF";
+    control.lastElementChild.textContent = label;
+  }
+}
+
+function renderSignals(zone, frame) {
+  if (!elements["signal-panel"].open) return;
+  const { totals } = frame;
+  const fixed = (n, units) => `${asNumber(n, 2)} ${units}`;
+  const binary = (on) => on ? "1" : "0";
+  const values = zone ? [
+    ["Ruser", fixed(zone.rUser,"Ω")], ["S", fixed(zone.irradiance, "W/m²")], ["TempC", fixed(zone.temperature,"°C")],
+    ["SoC", fixed(zone.soc,"%")], ["Vbus", fixed(zone.voltage,"V")], ["Pload", fixed(zone.served,"W")],
+    ["Ppv", fixed(zone.pv,"W")], ["Pbatt", fixed(zone.battery,"W")], ["Prenew", fixed(zone.pv+zone.battery,"W")],
+    ["Pgen", fixed(zone.generator,"W")], ["Pshared", fixed(zone.imported-zone.exported,"W")],
+    ["SW1 · Battery", binary(zone.switches.battery && zone.sourceEnabled)], ["SW2 · PV", binary(zone.switches.pv && zone.sourceEnabled)],
+    ["SW3 · Demand", binary(zone.switches.load && zone.sourceEnabled)], ["SW4 · Generator", binary(zone.switches.generator && elements.generator.checked && zone.sourceEnabled)],
+    ["reqFlag", binary(zone.request)], ["localAlive", binary(zone.localAlive)], ["cmdRelay", binary(zone.relay)],
+    ["mainCmd", zone.mainCommand], ["Roverride", zone.shed ? fixed(144 / zone.effectiveDemand,"Ω") : "Inactive"],
+  ] : [["Generator_P", fixed(totals.generator,"W")], ["ActiveTime", fixed(Math.max(0,frame.t-2),"s")],
+    ["Relay commands", frame.districts.map(({ relay }) => binary(relay)).join(" · ")],
+    ["Local MCU availability", frame.districts.map(({ localAlive }) => binary(localAlive)).join(" · ")]];
+  const nodes = values.flatMap(([label, value]) => {
+    const term = document.createElement("dt");
+    const desc = document.createElement("dd");
+    term.textContent = label;
+    desc.textContent = value;
+    return [term,desc];
+  });
+  elements["signal-values"].replaceChildren(...nodes);
+}
+
 const asNumber = (value, digits = 1) => Number.isFinite(value) ? value.toFixed(digits) : "—";
 const asW = (value) => `${asNumber(value)} W`;
 
@@ -163,11 +232,16 @@ function metrics(entries) {
 function renderInspector(frame) {
   const zone = frame.districts.find(({ id }) => id === state.selected);
   const { totals, support } = frame;
+  renderServices(zone);
+  renderSignals(zone, frame);
   if (zone) {
     const part = components[state.component];
     elements["node-id"].textContent = `${zone.id} · Priority ${zone.priority}`;
-    elements["node-title"].textContent = part?.[0] ?? zone.name;
-    elements["node-description"].textContent = part?.[1] ?? districtUses[zone.id];
+    const service = zone.services.find(({ id }) => id === state.component);
+    elements["node-title"].textContent = part?.[0] ?? service?.name ?? zone.name;
+    elements["node-description"].textContent = part?.[1] ?? (service
+      ? "Use the equipment switch below. This consumer contributes part of the district’s aggregate resistive load."
+      : districtUses[zone.id]);
     metrics([
       ["Bus voltage", `${asNumber(zone.voltage, 2)} V`], ["Battery SoC", `${asNumber(zone.soc)}%`],
       ["Demand", asW(zone.demand)], ["Load served", asW(zone.served)],
@@ -207,6 +281,7 @@ function render() {
   if (!state.run) return;
   const frame = sampleAt(state.run, state.time);
   state.scene?.update(frame);
+  if (!elements.diagram.hidden) singleLine.update(frame, state.selected);
   monitor.render({ time: frame.t, selectedZone: state.selected.startsWith("MG") ? state.selected : undefined });
   renderInspector(frame);
   const outages = frame.districts.filter(({ localAlive }) => !localAlive);
@@ -264,6 +339,26 @@ elements["reset-time"].addEventListener("click", () => seek(0));
 elements.time.addEventListener("input", () => seek(elements.time.value));
 elements["reset-view"].addEventListener("click", () => state.scene?.resetView());
 elements["focus-view"].addEventListener("click", () => state.scene?.select(state.selected, { focus: true }));
+for (const [id, useCity] of [["city-mode", true], ["line-mode", false]]) {
+  elements[id].addEventListener("click", () => {
+    elements["city-frame"].hidden = !useCity;
+    elements.diagram.hidden = useCity;
+    elements["city-mode"].setAttribute("aria-pressed", String(useCity));
+    elements["line-mode"].setAttribute("aria-pressed", String(!useCity));
+    render();
+  });
+}
+elements["wide-view"].addEventListener("click", () => {
+  const expanded = byId("city").classList.toggle("wide-view");
+  elements["wide-view"].setAttribute("aria-pressed", String(expanded));
+  elements["wide-view"].textContent = expanded ? "Compact view" : "Expand view";
+});
+elements.daylight.addEventListener("click", () => {
+  const day = elements.daylight.getAttribute("aria-pressed") !== "true";
+  elements.daylight.setAttribute("aria-pressed", String(day));
+  elements.daylight.textContent = day ? "Daylight" : "Night";
+  state.scene?.setDaylight(day);
+});
 for (const element of [elements.sharing, elements.takeover, elements.generator, elements["load-scale"]]) {
   element.addEventListener("change", configure);
 }
@@ -280,6 +375,7 @@ elements["restore-controls"].addEventListener("click", () => {
 });
 elements["figure-scenario"].addEventListener("change", renderFigures);
 elements["figure-gallery"].addEventListener("toggle", renderFigures);
+elements["signal-panel"].addEventListener("toggle", render);
 
 elements["district-form"].addEventListener("submit", (event) => {
   event.preventDefault();
@@ -289,13 +385,10 @@ elements["district-form"].addEventListener("submit", (event) => {
     elements["district-message"].textContent = "Select at least one change.";
     return;
   }
-  const values = Object.fromEntries(changes.map(([key, value]) => [key, key === "loadScale" ? Number(value) : value === "true"]));
-  const t = sampleAt(state.run, state.time).t;
-  state.interventions.push({ t, district: state.selected, ...values });
-  state.running = false;
+  const numeric = new Set(["resistance","temperature","irradiance"]);
+  const values = Object.fromEntries(changes.map(([key, value]) => [key, numeric.has(key) ? Number(value) : value === "true"]));
   event.target.reset();
-  configure();
-  elements["district-message"].textContent = `${state.selected} event applied at ${t.toFixed(2)} s.`;
+  manual(values);
 });
 elements["clear-events"].addEventListener("click", () => {
   state.interventions = [];
@@ -306,17 +399,17 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=control-room-2").then(({ mountCity }) => {
+import("./city.mjs?v=street-lab-1").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {
       elements["scene-status"].textContent = message || "";
       elements["scene-status"].hidden = kind === "ready";
       if (assets) elements["city-canvas"].dataset.loadedModels = assets.join(",");
-      if (kind === "error") elements["reset-view"].disabled = elements["focus-view"].disabled = true;
+      if (kind === "error") elements["reset-view"].disabled = elements["focus-view"].disabled = elements.daylight.disabled = true;
     },
   });
-  elements["reset-view"].disabled = elements["focus-view"].disabled = !state.scene;
+  elements["reset-view"].disabled = elements["focus-view"].disabled = elements.daylight.disabled = !state.scene;
   state.scene?.select(state.selected);
   render();
 }).catch((error) => {
