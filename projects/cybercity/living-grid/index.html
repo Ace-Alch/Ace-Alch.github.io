@@ -11,12 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./studio.css?v=living-grid-1">
-  <link rel="stylesheet" href="./game.css?v=living-grid-2">
+  <link rel="stylesheet" href="./game.css?v=utilities-1">
   <link rel="stylesheet" href="./monitor.css">
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}
   </script>
-  <script type="module" src="./studio.mjs?v=living-grid-2"></script>
+  <script type="module" src="./studio.mjs?v=utilities-1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -50,6 +50,11 @@
       <a href="./brief.html">Upgrade brief</a>
     </div>
     <section class="workbench" id="city" data-game="explore" aria-label="3D city control room">
+      <section class="utility-console" aria-label="City power status and switches">
+        <div class="utility-status" id="utility-status"></div>
+        <div class="utility-switches" id="utility-switches" aria-label="City and district switches"></div>
+        <p id="utility-flow" class="utility-flow"></p>
+      </section>
       <aside class="scenario-panel" aria-labelledby="scenario-title">
         <h2 id="scenario-title">Scenarios</h2>
         <div id="scenario-list" class="scenario-list" aria-label="Thesis scenarios"></div>
@@ -60,6 +65,7 @@
           <p id="mission-objective"></p>
           <ol id="mission-checks"></ol>
           <output id="mission-result">Run the scenario to get a report.</output>
+          <button id="water-drill" type="button">Start water service drill</button>
           <button id="export-run" type="button">Export browser telemetry</button>
         </section>
         <details class="experiment">
@@ -140,7 +146,7 @@
               <label>SW2 PV <select name="pv"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
               <label>SW3 Demand path <select name="load"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
               <label>SW4 Generator <select name="generator"><option value="">Unchanged</option><option value="false">Isolate</option><option value="true">Enable</option></select></label>
-              <label>Relay manual <select name="relay"><option value="">Unchanged</option><option value="false">Lock open</option><option value="true">Auto</option></select></label>
+              <label>Relay manual <select name="relayMode"><option value="">Unchanged</option><option value="0">Force open (0)</option><option value="1">Force closed (1)</option><option value="2">Automatic (2)</option></select></label>
               <label>RPi_SW Local MCU <select name="localMcu"><option value="">Unchanged</option><option value="false">Disconnect</option><option value="true">Enable</option></select></label>
               <button type="submit">Apply event</button>
               <button id="clear-events" type="button">Clear custom events</button>

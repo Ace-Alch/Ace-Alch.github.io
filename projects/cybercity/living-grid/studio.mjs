@@ -1,6 +1,6 @@
-import { DISTRICTS, LIMITS, SCENARIOS, sampleAt, simulate } from "./model.mjs?v=living-grid-1";
+import { DISTRICTS, LIMITS, SCENARIOS, sampleAt, simulate } from "./model.mjs?v=utilities-1";
 import { createMonitor } from "./monitor.mjs";
-import { createSingleLine } from "./single-line.mjs?v=living-grid-1";
+import { createSingleLine } from "./single-line.mjs?v=utilities-1";
 
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
@@ -47,6 +47,7 @@ const state = {
   run: null,
   scene: null,
   interventions: [],
+  mainEnabled: true,
 };
 
 const objectives = {
@@ -59,15 +60,20 @@ const objectives = {
 };
 let gameMode = "explore";
 let lastMission = "";
+let waterDrill = false;
 function renderMission() {
   if (gameMode !== "challenge") return;
   const id = state.run.scenario.id;
   const metrics = state.run.kpis;
   const final = state.time >= state.run.duration;
-  const signature = `${id}|${final}|${metrics.ens}|${metrics.criticalServed}|${metrics.generatorDependency}|${metrics.failureReason}`;
+  const frame=sampleAt(state.run,state.time);
+  const waterOnline=pumpState(frame).served>.025;
+  const signature = `${id}|${final}|${metrics.ens}|${metrics.criticalServed}|${metrics.generatorDependency}|${metrics.failureReason}|${waterDrill}|${waterOnline}`;
   if (signature === lastMission) return;
   lastMission = signature;
-  elements["mission-objective"].textContent = objectives[id];
+  elements["mission-objective"].textContent = waterDrill
+    ? "Utility drill · The MG2 pump is disconnected. Restore water supply to all four districts using the city pump switch."
+    : objectives[id];
   const limits = [
     `Keep MG1 load served at or above ${LIMITS.minCriticalServed}%`,
     `Keep generator dependency at or below ${LIMITS.maxGeneratorDependency}%`,
@@ -80,8 +86,9 @@ function renderMission() {
     return line;
   }));
   const result = elements["mission-result"];
-  result.dataset.result = final ? (metrics.success ? "pass" : "fail") : "running";
-  result.textContent = final
+  result.dataset.result = waterDrill ? (waterOnline?"pass":"running") : final ? (metrics.success ? "pass" : "fail") : "running";
+  result.textContent = waterDrill ? (waterOnline?"Drill complete · All districts have water supply":"Waiting for pump power")
+    : final
     ? `${metrics.success ? "Criteria met" : metrics.failureReason} · ${metrics.ens.toFixed(1)} Ws unmet · MG1 ${metrics.criticalServed.toFixed(2)}% served`
     : "Run to 20 seconds to read your engineering report.";
 }
@@ -92,7 +99,9 @@ const monitor = createMonitor(elements.monitor, {
 });
 const singleLine = createSingleLine(elements.diagram, selectNode, (key) => {
   const district = activeDistrict();
-  if (district) manual({ [key]: !district.switches[key] });
+  if (!district) return;
+  if(key==="relay") manual({relayMode:district.relayMode===2?0:district.relayMode===0?1:2});
+  else manual({ [key]: !district.switches[key] });
 });
 
 function button(label, handler) {
@@ -133,7 +142,63 @@ for (const [id, label] of [...DISTRICTS.map(({ id, name }) => [id, name]), ...Ob
   elements["node-list"].append(item);
 }
 
+const statusButtons=DISTRICTS.map(({id})=>{
+  const control=button(id,()=>selectNode(id));
+  byId("utility-status").append(control);
+  return control;
+});
+const utilitySwitches = [
+  ["water","City water pump", () => {
+    const pump=pumpState(sampleAt(state.run,state.time));
+    manual({service:"cooling",enabled:!pump.enabled},"MG2");
+  }],
+  ["main","Main MCU",()=> {state.mainEnabled=!state.mainEnabled; configure();}],
+  ["localMcu","Local MCU",()=>flipDistrict("localMcu")],
+  ["pv","PV",()=>flipDistrict("pv")],
+  ["battery","Battery",()=>flipDistrict("battery")],
+  ["load","Demand",()=>flipDistrict("load")],
+  ["relay","Relay",()=> {
+    const d=activeDistrict();
+    if(d) manual({relayMode:d.relayMode===2?0:d.relayMode===0?1:2});
+  }],
+  ["generator","Generator",()=> {elements.generator.checked=!elements.generator.checked; configure();}],
+].map(([key,label,action])=>{
+  const control=button(label,action);
+  byId("utility-switches").append(control);
+  return {key,label,control};
+});
+
+function pumpState(frame) {
+  return frame.districts.find(({id})=>id==="MG2").services.find(({id})=>id==="cooling");
+}
+function flipDistrict(key) {
+  const district=activeDistrict();
+  if(district) manual({[key]:!district.switches[key]});
+}
+function renderUtilities(frame) {
+  const pump=pumpState(frame);
+  const district=frame.districts.find(({id})=>id===state.selected);
+  for(const [index,row] of frame.districts.entries()) {
+    const control=statusButtons[index], off=row.voltage<10, limited=row.unserved>.4;
+    control.dataset.state=off?"out":limited?"limited":"normal";
+    control.setAttribute("aria-pressed",String(row.id===state.selected));
+    control.textContent=`${row.id}  ${row.voltage.toFixed(1)} V · ${off?"OUT":limited?"LIMITED":"SUPPLIED"}`;
+  }
+  for(const {key,label,control} of utilitySwitches) {
+    const global=["water","main","generator"].includes(key);
+    const enabled=key==="water"?pump.enabled:key==="main"?state.mainEnabled:key==="generator"?elements.generator.checked:district?.switches[key];
+    control.disabled=!global&&!district;
+    control.setAttribute("aria-pressed",String(Boolean(enabled)));
+    const value=key==="relay"&&district?["OPEN","CLOSED","AUTO"][district.relayMode]:enabled?"ON":"OFF";
+    control.textContent=`${global?"":(district?.id ?? "District")+" "}${label} · ${value}`;
+  }
+  const relay=frame.flows.filter(({type})=>type==="relay").map(({from,to,watts})=>`${from} → ${to} ${watts.toFixed(1)} W`);
+  const water=pump.served>.025?"Water supplied to four districts":"Water supply stopped";
+  byId("utility-flow").textContent=`${water} · ${relay.length?relay.join(" / "):"No relay transfer"} · Generator ${frame.totals.generator.toFixed(1)} W`;
+}
+
 function setScenario(id) {
+  waterDrill = false;
   state.scenario = id;
   state.time = 0;
   state.running = false;
@@ -149,6 +214,7 @@ function configure() {
     scenario: state.scenario,
     sharing: elements.sharing.checked,
     takeover: elements.takeover.checked,
+    mainEnabled: state.mainEnabled,
     generator: elements.generator.checked,
     loadScale: Number(elements["load-scale"].value) / 100,
     interventions: state.interventions,
@@ -191,12 +257,12 @@ function activeDistrict() {
   return sampleAt(state.run, state.time).districts.find(({ id }) => id === state.selected);
 }
 
-function manual(values) {
+function manual(values, target=state.selected) {
   const t = sampleAt(state.run, state.time).t;
-  state.interventions.push({ t, district: state.selected, ...values });
+  state.interventions.push({ t, district: target, ...values });
   state.running = false;
   configure();
-  elements["district-message"].textContent = `${state.selected} input applied at ${t.toFixed(2)} s.`;
+  elements["district-message"].textContent = `${target} input applied at ${t.toFixed(2)} s.`;
 }
 
 let controlsZone = null;
@@ -234,7 +300,7 @@ function renderSignals(zone, frame) {
     ["Pgen", fixed(zone.generator,"W")], ["Pshared", fixed(zone.imported-zone.exported,"W")],
     ["SW1 · Battery", binary(zone.switches.battery && zone.sourceEnabled)], ["SW2 · PV", binary(zone.switches.pv && zone.sourceEnabled)],
     ["SW3 · Demand", binary(zone.switches.load && zone.sourceEnabled)], ["SW4 · Generator", binary(zone.switches.generator && elements.generator.checked && zone.sourceEnabled)],
-    ["reqFlag", binary(zone.request)], ["localAlive", binary(zone.localAlive)], ["cmdRelay", binary(zone.relay)],
+    ["reqFlag", binary(zone.request)], ["localAlive", binary(zone.localAlive)], ["Relay_manual", zone.relayMode], ["cmdRelay", binary(zone.relay)],
     ["mainCmd", zone.mainCommand], ["Roverride", zone.shed ? fixed(144 / zone.effectiveDemand,"Ω") : "Inactive"],
   ] : [["Generator_P", fixed(totals.generator,"W")], ["ActiveTime", fixed(Math.max(0,frame.t-2),"s")],
     ["Relay commands", frame.districts.map(({ relay }) => binary(relay)).join(" · ")],
@@ -319,6 +385,7 @@ function renderInspector(frame) {
 function render() {
   if (!state.run) return;
   const frame = sampleAt(state.run, state.time);
+  renderUtilities(frame);
   renderMission();
   state.scene?.update(frame);
   if (!elements.diagram.hidden) singleLine.update(frame, state.selected);
@@ -393,6 +460,11 @@ elements["clean-hud"].addEventListener("click", () => {
   elements["clean-hud"].setAttribute("aria-pressed", String(minimal));
   elements["clean-hud"].textContent = minimal ? "Show HUD" : "Clear HUD";
 });
+byId("water-drill").addEventListener("click", () => {
+  setScenario("I");
+  waterDrill=true;
+  manual({service:"cooling",enabled:false},"MG2");
+});
 byId("export-run").addEventListener("click", () => {
   const columns = ["time_s","district","bus_V","battery_pct","demand_W","served_W","pv_W","battery_W","generator_W","import_W","export_W","relay_closed","controller"];
   const rows = state.run.frames.flatMap(({t,districts}) => districts.map(row =>
@@ -439,6 +511,7 @@ elements["load-scale"].addEventListener("input", () => {
   elements["load-scale-value"].textContent = `${elements["load-scale"].value}%`;
 });
 elements["restore-controls"].addEventListener("click", () => {
+  state.mainEnabled = true;
   elements.sharing.checked = true;
   elements.takeover.checked = true;
   elements.generator.checked = true;
@@ -458,7 +531,7 @@ elements["district-form"].addEventListener("submit", (event) => {
     elements["district-message"].textContent = "Select at least one change.";
     return;
   }
-  const numeric = new Set(["resistance","temperature","irradiance"]);
+  const numeric = new Set(["resistance","temperature","irradiance","relayMode"]);
   const values = Object.fromEntries(changes.map(([key, value]) => [key, numeric.has(key) ? Number(value) : value === "true"]));
   event.target.reset();
   manual(values);
@@ -472,7 +545,7 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=living-grid-2").then(({ mountCity }) => {
+import("./city.mjs?v=utilities-1").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {

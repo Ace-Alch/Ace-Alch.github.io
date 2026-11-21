@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { SERVICES } from "./services.mjs";
+import { SERVICES } from "./services.mjs?v=utilities-1";
 
 function noise(seed) {
   return () => {
@@ -45,6 +45,7 @@ export function buildField(parent, zone, h) {
   const wood = material(0x8d6141, .87);
   const waterColor = 0x68ddff;
   const effects = new Map();
+  let daylight = true;
 
   function refuge(x, z) {
     box(field, concrete, x, .75, z, 5.9, .19, 2.8);
@@ -109,12 +110,44 @@ export function buildField(parent, zone, h) {
         return sprite;
       });
       const accent = luminous(0xffc481, .9);
-      box(root, dark, -14.9, 1.38, 2.8, 4.2, 1.1, 1.85);
-      box(root, accent, -14.9, 1.94, 2.8, 3.3, .08, .22, false);
-      effects.set(service.id,{ type:"factory",parts,accent,power:0 });
+      const belt = material(0x202423,.91);
+      for(const x of [-12.8,-9.2,-5.6]) {
+        for(const z of [3.05,4.7]) box(root,dark,x,1.23,z,.22,1.23,.25);
+        box(root,steel,x,1.61,3.88,.25,.20,2.06);
+      }
+      box(root,belt,-9.3,1.8,3.88,8.75,.24,1.74);
+      for(const z of [2.95,4.81]) box(root,steel,-9.3,1.83,z,8.8,.12,.16);
+      for(let n=0;n<12;n++) box(root,steel,-13.4+n*.73,1.94,3.89,.07,.016,1.59,false);
+      const crates=Array.from({length:4},(_,i)=>box(root,wood,-13+i*2.15,2.28,3.86,.69,.65,.92));
+      box(root,accent,-13.53,2.49,2.53,.17,.17,.14,false);
+      box(root,dark,-13.53,1.42,2.53,.46,2.1,.39);
+      effects.set(service.id,{ type:"factory",parts,accent,crates,power:0, travel:0 });
+    } else if (service.kind === "fan") {
+      const accent=luminous(0x8ccac0,.6);
+      const rotors=[];
+      for(const x of [-1.8,2.6]) {
+        box(root,dark,x,2.75,5.35,3.1,3.1,.71);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.28,.11,10,32),steel);
+        place(rim,x,2.75,5.76,root);
+        const rotor=place(new THREE.Group(),x,2.75,5.77,root);
+        rotors.push(rotor);
+        for(let n=0;n<5;n++) {
+          const spoke=place(new THREE.Group(),0,0,0,rotor);
+          spoke.rotation.z=n*Math.PI*2/5;
+          const blade=box(spoke,steel,0,.63,0,.34,.98,.14);
+          blade.rotation.z=.30;
+        }
+        const cap=cylinder(rotor,steel,0,0,.13,.26,.26,.19,18);
+        cap.rotation.x=Math.PI/2;
+        box(root,accent,x+1.37,1.47,5.78,.16,.14,.08,false);
+        for(let i=0;i<7;i++) box(root,steel,x,1.66+i*.36,5.94,2.22,.026,.022,false);
+      }
+      effects.set(service.id,{ type:"fan",accent,rotors,power:0 });
     } else {
       const isRoad = service.kind === "street";
       const accent = luminous(0xffe2a7, 1.4);
+      const cast = isRoad ? new THREE.PointLight(0xffd088,0,15,1.8) : null;
+      if(cast) place(cast,0,4.72,8.55,root);
       const heads = isRoad ? [[-12,7.8], [0,7.8], [13.3,7.8]] : [[-7,-1.2],[0,-1.2],[7,-1.2]];
       for (const [x,z] of heads) {
         if (isRoad) {
@@ -126,28 +159,40 @@ export function buildField(parent, zone, h) {
           box(root,accent,x,1.62,z+.2,.52,.1,.29,false);
         }
       }
-      effects.set(service.id,{ type:"lights",accent,power:0 });
+      effects.set(service.id,{ type:"lights",accent,power:0,cast });
     }
   }
 
-  function update(zoneFrame) {
+  function update(zoneFrame,waterSupply=1) {
     for (const service of zoneFrame.services ?? []) {
       const f = effects.get(service.id);
       if (!f) continue;
       f.power = service.demand > .001 ? Math.min(1, service.served / service.demand) : 0;
+      if(f.type==="water" && !(zone.id==="MG2" && service.id==="cooling")) f.power=Math.min(f.power,waterSupply);
       f.accent.emissiveIntensity = f.power * 2.3;
       f.accent.color.setHex(f.power > .025 ? (f.type === "water" ? waterColor : 0xffd580) : 0x3e494b);
       if (f.water) f.water.object.visible = f.power > .025;
+      if (f.cast) f.cast.intensity = daylight ? 0 : f.power*23;
       for (const part of f.parts ?? []) part.visible = f.power > .025;
     }
   }
+  let last=0;
   function animate(now, reduced) {
     let moving = false;
+    const dt=last ? Math.min(50,now-last) : 0;
+    last=now;
     for (const f of effects.values()) {
-      if (!f.parts || f.power <= .025) continue;
+      if ((!f.parts && !f.rotors) || f.power <= .025) continue;
       moving ||= !reduced;
+      if (!reduced) {
+        for(const rotor of f.rotors ?? []) rotor.rotation.z += dt*.015*f.power;
+        if(f.crates) {
+          f.travel=(f.travel+dt*.0021*f.power)%8.1;
+          f.crates.forEach((crate,i)=>{crate.position.x=-13.25+(2.025*i+f.travel)%8.1;});
+        }
+      }
       const time = reduced ? 0 : now * .00014;
-      f.parts.forEach((part, i) => {
+      f.parts?.forEach((part, i) => {
         const phase = (i / f.parts.length + time * (.4 + f.power)) % 1;
         if (f.type === "water") part.position.copy(f.water.path.getPointAt(phase));
         else {
@@ -159,5 +204,8 @@ export function buildField(parent, zone, h) {
     }
     return moving;
   }
-  return { update, animate };
+  return { update, animate, setDaylight(day) {
+    daylight=day;
+    for(const effect of effects.values()) if(effect.cast) effect.cast.intensity=daylight?0:effect.power*23;
+  }};
 }

@@ -1,4 +1,4 @@
-import { DISTRICTS } from "./model.mjs?v=living-grid-1";
+import { DISTRICTS } from "./model.mjs?v=utilities-1";
 
 const points = [93, 251, 409, 567];
 const name = { battery: "Battery", pv: "PV", load: "Demand", generator: "Generator feeder", relay: "Support relay", localMcu: "Local MCU" };
@@ -49,10 +49,10 @@ export function createSingleLine(root, onSelect, onSwitch) {
   const switchTitle = root.querySelector("#flow-switch-title");
   const line = root.querySelector(".single-line");
   function update(frame, selected) {
-    const transfer = frame.flows.find(({ type }) => type === "relay");
-    line.toggleAttribute("data-sharing", Boolean(transfer));
+    const transfers = frame.flows.filter(({ type }) => type === "relay");
+    line.toggleAttribute("data-sharing", transfers.length > 0);
     line.toggleAttribute("data-generating", frame.totals.generator > .05);
-    const sharing = transfer ? `${transfer.from} → ${transfer.to} · ${transfer.watts.toFixed(1)} W`
+    const sharing = transfers.length ? transfers.map(({from,to,watts})=>`${from} → ${to} · ${watts.toFixed(1)} W`).join(" / ")
       : frame.support?.receiver ? `${frame.support.receiver} · ${frame.support.reason || "Awaiting support"}` : "Relays open";
     route.textContent = `${sharing}   ·   Shared generator ${frame.totals.generator.toFixed(1)} W`;
     if (explanation.open) {
@@ -83,7 +83,7 @@ export function createSingleLine(root, onSelect, onSwitch) {
       const allowed = district?.switches[b.dataset.switch] ?? false;
       b.disabled = !district;
       b.setAttribute("aria-pressed", String(allowed));
-      b.querySelector("small").textContent = b.dataset.switch === "relay" && allowed ? "AUTO"
+      b.querySelector("small").textContent = b.dataset.switch === "relay" && district ? ["OPEN","CLOSED","AUTO"][district.relayMode]
         : b.dataset.switch === "localMcu" && allowed ? (district.localAlive ? "ENABLED" : "SCENARIO FAULT")
         : allowed ? "ENABLED" : "ISOLATED";
     }

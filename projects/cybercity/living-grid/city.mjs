@@ -5,9 +5,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { LIMITS } from './model.mjs?v=street-lab-1';
-import { buildField, surfaceTexture } from './field.mjs?v=street-lab-1';
+import { LIMITS } from './model.mjs?v=utilities-1';
+import { buildField, surfaceTexture } from './field.mjs?v=utilities-1';
 import { createExplorer } from './explore.mjs?v=living-grid-2';
+import { span, tower, createWaterNetwork } from './infrastructure.mjs?v=utilities-1';
 
 const ZONES = [
   { id: 'MG1', name: 'CRITICAL', tint: 0xf3aac6, site: [29, -24], asset: 'hospital', height: 13, width: 26 },
@@ -503,9 +504,11 @@ function systemNode(scene, id) {
 function sourceRoute(zone, kind) {
   const [x, , z] = zone.branchPos;
   if (kind === 'share') {
-    return [zone.branchPos, [x, SHARING_BUS[1], Math.sign(z) * 3.5], [0, SHARING_BUS[1], Math.sign(z) * 3.5], SHARING_BUS];
+    const start=[x,8.8,z], end=[0,8.8,0];
+    return [zone.branchPos,...span(start,end,.9), SHARING_BUS];
   }
-  return [[x + Math.sign(x) * 0.75, GENERATOR_BUS[1], z], [x + Math.sign(x) * 0.75, GENERATOR_BUS[1], GENERATOR_BUS[2]], GENERATOR_BUS, SYSTEM.GEN.port];
+  const side=Math.sign(x), start=[side*8.95,11,z], bend=[side*8.95,11,34], end=[0,11,48.1];
+  return [zone.branchPos,...span(start,bend,1.28),...span(bend,end,.9).slice(1),SYSTEM.GEN.port];
 }
 
 function conduitNodes(scene, districts) {
@@ -513,25 +516,28 @@ function conduitNodes(scene, districts) {
   scene.add(conduits);
   const sharing = material(0x345662, 0.58, 0.47);
   const generator = material(0x6b553e, 0.59, 0.46);
-  const telemetry = new THREE.LineDashedMaterial({ color: 0x4893a6, transparent: true, opacity: 0.53, dashSize: 0.66, gapSize: 0.63 });
+  const support = { box, cylinder, material };
+  const towers = new Set();
+  function addTower(point, kind) {
+    const key=`${point[0]},${point[2]}`;
+    if (towers.has(key)) return;
+    towers.add(key);
+    const footing=new THREE.Group();
+    conduits.add(footing);
+    tower(footing,point[0],point[2],point[1],kind,support);
+    combineStaticMeshes(footing);
+  }
   const paths = new Map();
   for (const [id, zone] of districts) {
-    tube(conduits, sourceRoute(zone, 'share'), 0.15, sharing);
-    tube(conduits, sourceRoute(zone, 'generator'), 0.13, generator);
-    paths.set(`GEN:${id}`, sourceRoute(zone, 'generator').slice().reverse());
-    const [x, y, z] = zone.branchPos;
-    const [px, , pz] = sourceRoute(zone, 'generator')[0];
-    tube(conduits, [[px, GENERATOR_BUS[1], pz], [x, y, z]], 0.13, generator, 6);
-    box(conduits, luminous(0xcb9f60, 0.34), px, GENERATOR_BUS[1] + 0.06, pz, 0.69, 0.26, 0.52);
-    for (const name of ['MAIN', 'DAQ']) {
-      const [srcX, srcZ] = SYSTEM[name].site;
-      const tech = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-        v3([srcX, 0.93, srcZ - 6]), v3([srcX, 0.93, 46]),
-        v3([x + Math.sign(x) * 1.52, 0.93, 46]), v3([x + Math.sign(x) * 1.52, 0.93, z]),
-      ]), telemetry);
-      tech.computeLineDistances();
-      conduits.add(tech);
+    const relayRun=sourceRoute(zone,'share'), genRun=sourceRoute(zone,'generator');
+    [relayRun[1],relayRun.at(-2)].forEach(point=>addTower(point,'relay'));
+    [genRun[1],genRun[9],genRun.at(-2)].forEach(point=>addTower(point,'generator'));
+    tube(conduits,relayRun,.087,sharing,6);
+    tube(conduits,genRun,.087,generator,6);
+    for (const [run,metal] of [[relayRun,sharing],[genRun,generator]]) {
+      tube(conduits,run.slice(1,-1).map(([x,y,z])=>[x+.66,y,z]),.048,metal,6);
     }
+    paths.set(`GEN:${id}`,genRun.slice().reverse());
   }
   for (const [idA, a] of districts) for (const [idB, b] of districts) {
     if (idA === idB) continue;
@@ -765,6 +771,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     key.intensity = daylight ? 3.2 : 1.25;
     fill.intensity = daylight ? .88 : 1.3;
     rim.intensity = daylight ? .34 : .65;
+    for (const {field} of districts.values()) field.setDaylight(daylight);
     renderer.shadowMap.needsUpdate = true;
     redraw = true;
   }
@@ -813,6 +820,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     for (let i=0;i<5;i++) trees(scene,x+(i-2)*3,z+Math.sin(i*2)*5,311+i+x,.82);
   }
   const paths = conduitNodes(scene, districts);
+  const water = createWaterNetwork(scene,districts,{ box,cylinder,material,luminous,tube,tag });
   const activeLayer = new THREE.Group();
   scene.add(activeLayer);
   const highlights = new Map();
@@ -870,7 +878,10 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     for (const name of highlights.keys()) if (!flows.has(name)) setHighlight(name, false, 0);
     liveFlows = [...flows];
     for (const [name, watts] of liveFlows) setHighlight(name, true, watts);
-    for (const row of data?.districts ?? []) districts.get(row.id)?.field.update(row);
+    const pump = data?.districts?.find(({id})=>id==="MG2")?.services.find(({id})=>id==="cooling");
+    const waterSupply = pump?.demand > .001 ? Math.min(1,pump.served/pump.demand) : 0;
+    water.update(waterSupply);
+    for (const row of data?.districts ?? []) districts.get(row.id)?.field.update(row,waterSupply);
     recolor();
   }
 
@@ -986,7 +997,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
         glint.position.copy(highlight.path.getPointAt(t));
       }
     }
-    let fieldMoving = false;
+    let fieldMoving = water.animate(now,reduceMotion.matches);
     for (const { field } of districts.values()) fieldMoving = field.animate(now, reduceMotion.matches) || fieldMoving;
     if (redraw || fieldMoving || (liveFlows.length && !reduceMotion.matches)) {
       renderer.render(scene, camera);
@@ -996,7 +1007,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   }
 
   const pickRoots = [...Array.from(districts.values(), (district) => district.root),
-    ...Array.from(stations.values(), (station) => station.group)];
+    ...Array.from(stations.values(), (station) => station.group),water.root];
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   canvas.addEventListener('pointerdown', pointerDown);

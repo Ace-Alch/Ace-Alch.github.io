@@ -9,6 +9,18 @@
 .workbench[data-game=explore] .inspector { grid-column:2; }
 .workbench[data-game=explore].wide-view { grid-template-columns:minmax(0,1fr); }
 .workbench[data-game=explore].wide-view .inspector { grid-column:1; }
+.workbench .utility-console { grid-column:1/-1; grid-row:1; min-width:0; padding:9px 11px; display:grid; gap:7px; border:1px solid #42625d; background:#12231f; border-radius:9px; }
+.workbench.wide-view .city-panel { grid-row:2; }
+.utility-status, .utility-switches { display:flex; flex-wrap:wrap; gap:4px 7px; }
+.utility-status button, .utility-switches button { border:1px solid #39554f; border-radius:5px; background:#0d1a19; color:var(--ink); padding:5px 7px; font:500 .71rem/1.25 var(--mono); }
+.utility-status button[data-state=limited] { color:var(--gold); }
+.utility-status button[data-state=out] { color:#ff9b85; }
+.utility-status button[data-state=normal] { color:var(--mint); }
+.utility-status button[aria-pressed=true] { border-color:#b0ecce; }
+.utility-switches button[aria-pressed=false] { color:#ffbba5; border-color:#754d42; }
+.utility-switches button:first-child { border-color:#68c8d5; }
+.utility-flow { margin:0; color:var(--muted); font:.73rem/1.38 var(--mono); }
+.wide-view .utility-console { order:-2; }
 .navigation-controls { position:absolute; top:53px; right:12px; display:flex; gap:6px; }
 .navigation-controls label { display:flex; align-items:center; gap:4px; padding:4px 6px; color:#eff6f4; background:#0b1b21ee; border:1px solid #708e8066; border-radius:6px; font-size:.72rem; }
 .navigation-controls select, .speed-control select { color:var(--ink); background:#14252a; border:1px solid var(--border); border-radius:4px; font-size:.72rem; padding:3px; }
@@ -24,12 +36,13 @@
 .mission output { display:block; padding:7px; border:1px solid var(--border); border-radius:5px; color:var(--ink); }
 .mission output[data-result=pass] { border-color:#59977d; color:var(--mint); }
 .mission output[data-result=fail] { border-color:#a37b49; color:var(--gold); }
-#export-run { margin-top:8px; background:#14252a; border:1px solid var(--border); border-radius:5px; font-size:.72rem; padding:5px 7px; }
+#export-run, #water-drill { margin-top:8px; background:#14252a; border:1px solid var(--border); border-radius:5px; font-size:.72rem; padding:5px 7px; }
 @media (max-width:920px) {
  .workbench[data-game=explore] { grid-template-columns:minmax(0,1fr); }
  .workbench[data-game=explore] .inspector { grid-column:1; }
 }
 @media (max-width:680px) {
+ .workbench .utility-console { order:-2; }
  .mode-strip button { font-size:.73rem; padding-inline:7px; }
  .navigation-controls { right:8px; top:45px; }
  .navigation-controls label { font-size:.62rem; }

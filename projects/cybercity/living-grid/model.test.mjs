@@ -26,3 +26,27 @@ test("the scheduled controller fault and manual loads change the selected distri
   assert.ok(sampleAt(run, 2.95).districts[0].services.find(({ id }) => id === "water").served > 0);
   assert.equal(sampleAt(run, 3).districts[0].services.find(({ id }) => id === "water").served, 0);
 });
+
+test("manual relay commands follow the 0.5 s holdoff and honor open, closed, automatic", () => {
+  const run=simulate({scenario:"I",mainEnabled:false,interventions:[
+    {t:0,district:"MG1",relayMode:1},
+    {t:2,district:"MG1",relayMode:0},
+    {t:4,district:"MG1",relayMode:2},
+  ]});
+  assert.equal(sampleAt(run,.45).districts[0].relay,false);
+  assert.equal(sampleAt(run,.5).districts[0].relay,true);
+  assert.equal(sampleAt(run,2).districts[0].relay,false);
+  assert.equal(sampleAt(run,4).districts[0].relayMode,2);
+  assert.ok(run.frames.every(frame=>!frame.flows.some(flow=>flow.type==="relay")));
+});
+
+test("the shared water pump loses and regains electrical power at its configured events", () => {
+  const run=simulate({scenario:"I",interventions:[
+    {t:3,district:"MG2",service:"cooling",enabled:false},
+    {t:7,district:"MG2",service:"cooling",enabled:true},
+  ]});
+  const power=t=>sampleAt(run,t).districts[1].services.find(s=>s.id==="cooling").served;
+  assert.ok(power(2.95)>0);
+  assert.equal(power(3),0);
+  assert.ok(power(7)>0);
+});
