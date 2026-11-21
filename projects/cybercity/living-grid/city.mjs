@@ -10,6 +10,7 @@ import { buildField, surfaceTexture } from './field.mjs?v=layers-1';
 import { createExplorer } from './explore.mjs?v=living-grid-2';
 import { span, tower, createWaterNetwork } from './infrastructure.mjs?v=layers-1';
 import { CONTROL_ALTITUDE, createControlLayer } from './control-layer.mjs?v=camera-1';
+import { POWER_COLORS, describeBattery, displayWatts } from './power-readings.mjs';
 
 const ZONES = [
   { id: 'MG1', name: 'CRITICAL', tint: 0xf3aac6, site: [29, -24], asset: 'hospital', height: 13, width: 26 },
@@ -225,23 +226,72 @@ function pvPanel(parent, x, z) {
   return { mount: tilt, placeholder: body };
 }
 
-function storage(parent, tint) {
-  const steel = material(0x637685, 0.53, 0.54);
-  const painted = material(0x2c3a49, 0.61, 0.37);
-  const dark = material(0x19232b, 0.66);
+function storage(parent) {
+  const steel = material(0x848d90,.49,.67);
+  const caseMaterial = material(0x303b3e,.76,.35);
+  const insulation = material(0x23332d,.85);
+  const copper = material(0xc4834d,.48,.75);
+  const red = material(0xa9382b,.7,.14);
+  const gold = luminous(0xa3df90,.24);
   const bays = [];
-  for (let i = 0; i < 3; i++) {
-    const x = (i - 1) * 1.89;
-    box(parent, steel, x, 1.51, 0, 1.7, 1.8, 2.6);
-    box(parent, painted, x, 1.51, 1.32, 1.49, 1.62, 0.075);
-    box(parent, dark, x, 1.78, 1.38, 1.14, 0.31, 0.05);
-    for (let j = 0; j < 3; j++) {
-      box(parent, dark, x, 1.27 - j * 0.15, 1.38, 1.16, 0.062, 0.045);
+  box(parent,steel,0,.77,0,6.25,.25,3.72);
+  box(parent,caseMaterial,0,1.04,0,5.9,.43,3.38);
+  box(parent,caseMaterial,0,1.43,1.51,5.9,.46,.25);
+  box(parent,caseMaterial,0,1.69,-1.52,5.9,.89,.22);
+  for (const x of [-1.63,0,1.63]) {
+    const core=cylinder(parent,insulation,x,1.94,0,.58,.58,2.44,28);
+    core.rotation.x=Math.PI/2;
+    for(const z of [-1.27,1.27]) {
+      const cap=cylinder(parent,z>0?red:steel,x,1.94,z,.52,.52,.13,24);
+      cap.rotation.x=Math.PI/2;
+      const bolt=cylinder(parent,copper,x,1.94,z*1.082,.18,.18,.12,12);
+      bolt.rotation.x=Math.PI/2;
     }
-    bays.push(box(parent, luminous(tint, 0.4), x, 1.79, 1.415, 0.76, 0.06, 0.023, false));
-    box(parent, steel, x, 0.73, 0, 1.82, 0.13, 2.84);
+    for(const z of [-.84,.84]) {
+      const clamp=cylinder(parent,steel,x,1.94,z,.613,.613,.12,28);
+      clamp.rotation.x=Math.PI/2;
+    }
   }
+  box(parent,copper,-.82,2.10,1.36,1.62,.10,.18);
+  box(parent,copper,.82,2.10,-1.36,1.62,.10,.18);
+  box(parent,steel,2.67,1.63,.65,.53,1.17,1.56);
+  box(parent,caseMaterial,2.68,1.72,1.44,.48,.48,.06);
+  for(let i=0;i<3;i++)bays.push(box(parent,gold.clone(),2.68,1.61+i*.17,1.49,.31,.075,.037,false));
+  const plate=makeSign(parent,"#beebae","3S Li-ion  /  BATTERY PACK",5.1,[0,1.40,1.65]);
+  plate.renderOrder=1;
+  cylinder(parent,red,2.5,1.4,-1.55,.17,.17,.43,16);
+  cylinder(parent,insulation,2.12,1.4,-1.55,.17,.17,.43,16);
   return bays;
+}
+
+function makePowerLabel(parent, color, at) {
+  const panel=document.createElement("canvas");
+  panel.width=640; panel.height=112;
+  const paint=panel.getContext("2d");
+  const map=new THREE.CanvasTexture(panel);
+  map.colorSpace=THREE.SRGBColorSpace;
+  const sign=new THREE.Sprite(new THREE.SpriteMaterial({map,transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));
+  sign.scale.set(11.8,2.07,1);
+  sign.position.set(...at);
+  sign.renderOrder=8;
+  sign.visible=false;
+  parent.add(sign);
+  let previous="";
+  return {sign,set(text) {
+    if(text===previous)return;
+    previous=text;
+    paint.clearRect(0,0,640,112);
+    paint.fillStyle="#09171ef5";
+    paint.strokeStyle=`#${color.toString(16).padStart(6,"0")}`;
+    paint.lineWidth=5;
+    paint.beginPath();paint.roundRect(3,3,634,106,14);paint.fill();paint.stroke();
+    paint.fillStyle=paint.strokeStyle;
+    paint.textAlign="center";
+    paint.textBaseline="middle";
+    paint.font="700 40px Arial, sans-serif";
+    paint.fillText(text,320,58,603);
+    map.needsUpdate=true;
+  }};
 }
 
 function localUnit(parent, tint, scale = 1) {
@@ -436,7 +486,7 @@ function createDistrict(scene, zone, assetMounts) {
   box(solar, material(0x40525d, 0.59, 0.23), -3.82, 0.89, 0.0, 0.82, 0.62, 0.72);
   const solarLamp = box(solar, luminous(0x72e6d9, 0.6), -3.82, 1.23, 0, 0.31, 0.04, 0.36, false);
   const batteries = tag(place(new THREE.Group(), 5.0, 0, 16.1, root), zone.id, 'battery');
-  const energyLeds = storage(batteries, zone.tint);
+  const energyLeds = storage(batteries);
   const controller = tag(place(new THREE.Group(), 16.9, 0, 16.1, root), zone.id, 'local');
   const status = localUnit(controller, zone.tint);
   const bus = tag(place(new THREE.Group(), 12.45, 0, 15.85, root), zone.id, 'bus');
@@ -451,16 +501,24 @@ function createDistrict(scene, zone, assetMounts) {
   box(branch, material(0x4b606d, 0.49, 0.43), 0, 1.24, 0, 2.6, 0.42, 2.16);
   const branchPos = [x + branch.position.x, 1.58, z + branch.position.z];
   const localSource = [
-    ["pv", [[-18.62,1.12,15.9],[-18.62,1.12,13.58],[12.45,1.12,13.58],[12.45,1.12,15.45]],0xf4d17a],
-    ["battery", [[5,1.03,15.55],[5,1.03,14.48],[11.9,1.03,14.48],[11.9,1.03,15.35]],0x9edb88],
-  ].map(([kind, points, color]) => {
-    const route=tag(new THREE.Group(),zone.id,kind);
+    ["pv", [[-18.62,1.12,15.9],[-18.62,1.12,13.58],[12.45,1.12,13.58],[12.45,1.12,15.45]],[-11,3.3,14.1]],
+    ["battery", [[7.5,1.42,14.55],[7.5,1.07,13.98],[9.3,1.07,13.98],[9.3,1.07,15.35],[11.9,1.07,15.35]],[5,3.65,16.9]],
+    ["served", [[13.32,1.17,15.75],[14.06,1.17,15.75],[14.06,1.17,10.3],[10.8,1.17,10.3]],[14.4,3.55,10.9]]
+  ].map(([kind, points, at]) => {
+    const color=POWER_COLORS[kind];
+    const route=tag(new THREE.Group(),zone.id,kind==="served"?"bus":kind);
     root.add(route);
     const {object,path}=tube(route,points,.09,luminous(color,.2),8);
     const sparks=Array.from({length:kind==="pv"?4:2},()=>mesh(new THREE.CapsuleGeometry(.067,.34,2,6),
       new THREE.MeshBasicMaterial({color}),0,0,0,route,false));
-    return {kind,object,path,sparks,watts:0};
+    return {kind,object,path,sparks,watts:0,label:makePowerLabel(route,color,at)};
   });
+  const dab=tag(place(new THREE.Group(),9.3,0,14,root),zone.id,"battery");
+  box(dab,material(0x62717a,.54,.55),0,1.1,0,1.8,.56,1.28);
+  for(let i=0;i<6;i++)box(dab,material(0x334b54,.58,.45),-.66+i*.26,1.41,0,.075,.12,1.03);
+  const dabPlate=makeSign(dab,"#beebae","DAB",1.58,[0,1.13,.66]);dabPlate.renderOrder=1;
+  const distribution=tag(place(new THREE.Group(),10.8,0,10.3,root),zone.id,"bus");
+  box(distribution,material(0x42657c,.61,.42),0,1.04,0,1.15,.75,.68);
   const field = buildField(root, zone, { place, box, cylinder, material, luminous, tag, tube, trees, assetMounts });
   return { root, ring, status, busLight, solarLamp, sign, relay, energyLeds, branchPos, field, localSource,
     mcuPosition:[x+16.9,1.5,z+16.1] };
@@ -922,6 +980,9 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
       for(const link of zone?.localSource??[]) {
         link.watts=row[link.kind];
         link.object.material.emissiveIntensity=.12 + Math.min(.7,Math.abs(link.watts)/18);
+        const label=link.kind==="pv"?"PV → bus":link.kind==="served"?"Bus → loads"
+          :describeBattery(link.watts)==="Idle"?"Battery idle":link.watts<0?"Bus → battery":"Battery → bus";
+        link.label.set(`${label}  ·  ${displayWatts(link.watts)}`);
       }
     }
     controlLayer.update(data,mainEnabled);
@@ -950,7 +1011,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
       place.sign.material.opacity = isSelected ? 1 : 0.79;
       for (let i = 0; i < place.energyLeds.length; i++) {
         const offline = row?.switches?.battery === false;
-        place.energyLeds[i].material.emissive.setHex(offline ? 0xf37463 : config.tint);
+        place.energyLeds[i].material.emissive.setHex(offline ? 0xf37463 : row?.battery<-.05 ? 0x7ecdf1 : POWER_COLORS.battery);
         place.energyLeds[i].material.emissiveIntensity = offline ? 0.63 : (row?.soc ?? 52) / 100 > i / 3 ? 0.78 : 0.105;
       }
     }
@@ -1055,8 +1116,9 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     let fieldMoving = utilities && water.animate(now,reduceMotion.matches);
     let controlMoving = !utilities && controlLayer.animate(now,reduceMotion.matches);
     const axis = new THREE.Vector3(0,1,0);
-    for(const {localSource} of districts.values()) for(const link of localSource) {
+    for(const [id,{localSource}] of districts) for(const link of localSource) {
       const live=utilities&&Math.abs(link.watts)>.05;
+      link.label.sign.visible=utilities&&labels&&id===selected;
       for(const [i,spark] of link.sparks.entries()) {
         spark.visible=live;
         if(!live)continue;

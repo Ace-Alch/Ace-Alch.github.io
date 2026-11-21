@@ -11,12 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./studio.css?v=living-grid-1">
-  <link rel="stylesheet" href="./game.css?v=layers-1">
+  <link rel="stylesheet" href="./game.css?v=power-1">
   <link rel="stylesheet" href="./monitor.css">
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}
   </script>
-  <script type="module" src="./studio.mjs?v=camera-1"></script>
+  <script type="module" src="./studio.mjs?v=power-1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -141,6 +141,11 @@
           <h3 id="node-title">Critical</h3>
           <p id="node-description"></p>
           <div id="node-metrics" class="node-metrics"></div>
+          <section id="local-power" class="local-power" aria-labelledby="local-power-title">
+            <h4 id="local-power-title">Live power paths</h4>
+            <dl id="local-power-rows"></dl>
+            <p id="battery-state"></p>
+          </section>
           <p id="node-state" class="node-state"></p>
           <div id="service-controls" class="service-controls" aria-label="District equipment"></div>
           <details id="district-control" class="experiment">

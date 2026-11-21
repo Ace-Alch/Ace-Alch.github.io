@@ -34,6 +34,15 @@
 .air-signals dl div { min-width:0; padding:5px 7px; background:#15262a; border-radius:5px; }
 .air-signals dt { font:600 .72rem var(--mono); color:var(--mint); }
 .air-signals dd { margin:3px 0 0; font:.71rem/1.45 var(--mono); color:var(--muted); overflow-wrap:anywhere; }
+.local-power { border-top:1px solid var(--border); margin:8px 0 10px; padding-top:7px; }
+.local-power h4 { margin:0 0 5px; font:700 1.14rem var(--display); }
+.local-power dl { display:grid; grid-template-columns:1fr auto; gap:3px 6px; font:.71rem/1.45 var(--mono); margin:0; }
+.local-power dt { color:var(--muted); }
+.local-power dd { margin:0; text-align:right; color:var(--ink); white-space:nowrap; }
+.local-power dt:first-child { color:#f4d17a; }
+.local-power dt:nth-child(3) { color:#9edb88; }
+.local-power dt:nth-child(11) { color:#7ecdf1; }
+.local-power p { margin:6px 0 0; font:.72rem/1.4 var(--mono); color:var(--muted); }
 .clean-hud .signal-key, .control-network .view-key { display:none; }
 .wide-view .utility-console { order:-2; }
 .navigation-controls { position:absolute; top:53px; right:12px; display:flex; gap:6px; }

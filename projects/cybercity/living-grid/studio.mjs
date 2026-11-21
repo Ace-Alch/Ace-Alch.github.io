@@ -1,6 +1,7 @@
 import { DISTRICTS, LIMITS, SCENARIOS, sampleAt, simulate } from "./model.mjs?v=layers-1";
 import { createMonitor } from "./monitor.mjs";
 import { createSingleLine } from "./single-line.mjs?v=utilities-1";
+import { describeBattery, displayWatts, districtPowerRows } from "./power-readings.mjs";
 
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
@@ -367,9 +368,21 @@ function metrics(entries) {
   }
 }
 
+const localPower=byId("local-power");
+const powerRows=byId("local-power-rows");
+for(let i=0;i<6;i++)powerRows.append(document.createElement("dt"),document.createElement("dd"));
 function renderInspector(frame) {
   const zone = frame.districts.find(({ id }) => id === state.selected);
   const { totals, support } = frame;
+  localPower.hidden=!zone;
+  if(zone) {
+    for(const [i,[label,watts]] of districtPowerRows(zone).entries()) {
+      powerRows.children[i*2].textContent=label;
+      powerRows.children[i*2+1].textContent=displayWatts(watts);
+    }
+    const mode=!zone.switches.battery ? "Isolated" : !zone.sourceEnabled ? "Control unavailable" : describeBattery(zone.battery);
+    byId("battery-state").textContent=`3S pack · ${zone.soc.toFixed(1)}% · ${mode}`;
+  }
   renderServices(zone);
   renderSignals(zone, frame);
   if (zone) {
@@ -383,7 +396,6 @@ function renderInspector(frame) {
     metrics([
       ["Bus voltage", `${asNumber(zone.voltage, 2)} V`], ["Battery SoC", `${asNumber(zone.soc)}%`],
       ["Demand", asW(zone.demand)], ["Load served", asW(zone.served)],
-      ["PV / battery", `${asNumber(zone.pv)} / ${asNumber(zone.battery)} W`], ["Generator", asW(zone.generator)],
     ]);
     const owner = { LOCAL: "Local MCU in control", MAIN: "Main MCU in control", OFFLINE: "No local command available" }[zone.owner];
     const condition = [
@@ -598,7 +610,7 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=camera-1").then(({ mountCity }) => {
+import("./city.mjs?v=power-1").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {
