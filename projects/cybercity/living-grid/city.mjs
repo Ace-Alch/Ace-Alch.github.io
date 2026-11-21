@@ -7,7 +7,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { LIMITS } from './model.mjs?v=street-lab-1';
 import { buildField, surfaceTexture } from './field.mjs?v=street-lab-1';
-import { createExplorer } from './explore.mjs?v=living-grid-1';
+import { createExplorer } from './explore.mjs?v=living-grid-2';
 
 const ZONES = [
   { id: 'MG1', name: 'CRITICAL', tint: 0xf3aac6, site: [29, -24], asset: 'hospital', height: 13, width: 26 },
@@ -719,7 +719,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
       float noise(vec2 p) {return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float cloud(vec2 p) {vec2 a=floor(p), b=fract(p); b=b*b*(3.-2.*b); return mix(mix(noise(a),noise(a+vec2(1,0)),b.x),mix(noise(a+vec2(0,1)),noise(a+1.),b.x),b.y);}
       void main(){vec3 d=normalize(ray); float h=max(0.,d.y);
-      vec3 day=mix(vec3(.68,.79,.83),vec3(.27,.52,.77),smoothstep(0.,.78,h));
+      vec3 day=mix(vec3(.624,.741,.773),vec3(.27,.52,.77),smoothstep(0.,.78,h));
       vec2 uv=d.xz/max(.24,h+.22)*3.;
       float c=smoothstep(.57,.82,cloud(uv)*.7+cloud(uv*2.3)*.3)*smoothstep(.02,.32,h);
       day=mix(day,vec3(.88,.91,.91),c*.75);
@@ -760,7 +760,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
     const color = daylight ? daylightSky : nightSky;
     renderer.setClearColor(color, 1);
     scene.fog.color.setHex(color);
-    scene.fog.density = daylight ? .0015 : .0026;
+    scene.fog.density = daylight ? .003 : .0038;
     sky.material.uniforms.light.value = Number(daylight);
     key.intensity = daylight ? 3.2 : 1.25;
     fill.intensity = daylight ? .88 : 1.3;
@@ -786,7 +786,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   fieldTexture.repeat.set(160, 160);
   fieldTexture.needsUpdate = true;
   const floor = new THREE.MeshStandardMaterial({ color: 0x8d9d7c, map: fieldTexture, roughness: .96 });
-  const stage = mesh(new THREE.PlaneGeometry(460, 460), floor, 0, -2.45, 0, scene, false);
+  const stage = mesh(new THREE.CircleGeometry(430,64), floor, 0, -2.45, 0, scene, false);
   stage.rotation.x = -Math.PI / 2;
   const plinth = material(0x263748, 0.69, 0.27);
   deck(scene, plinth, 0, -2.0, 7, 128, 127, 0.92, 7);
@@ -804,8 +804,7 @@ export function mountCity(canvas, { onPick = () => {}, onStatus = () => {} } = {
   for (const id of Object.keys(SYSTEM)) stations.set(id, systemNode(scene, id));
   const assetMounts = [];
   const districts = new Map(ZONES.map((zone) => [zone.id, createDistrict(scene, zone, assetMounts)]));
-  const emergency = tag(place(new THREE.Group(), 42, .83, -13, districts.get("MG1").root), "MG1", "consumer");
-  emergency.position.set(11,.83,10.9);
+  const emergency = tag(place(new THREE.Group(), 11,.83,10.9, districts.get("MG1").root), "MG1", "consumer");
   emergency.rotation.y = Math.PI / 2;
   assetMounts.push({ name: "ambulance", target: emergency, height: 1.75, width: 1.5, depth: 4.8, replace: true });
   for (const [x,z,size] of [[-102,-74,19],[-83,-85,15],[-122,37,16],[92,-79,13],[112,43,19],[83,77,12]]) {

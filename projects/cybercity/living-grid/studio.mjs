@@ -393,6 +393,17 @@ elements["clean-hud"].addEventListener("click", () => {
   elements["clean-hud"].setAttribute("aria-pressed", String(minimal));
   elements["clean-hud"].textContent = minimal ? "Show HUD" : "Clear HUD";
 });
+byId("export-run").addEventListener("click", () => {
+  const columns = ["time_s","district","bus_V","battery_pct","demand_W","served_W","pv_W","battery_W","generator_W","import_W","export_W","relay_closed","controller"];
+  const rows = state.run.frames.flatMap(({t,districts}) => districts.map(row =>
+    [t,row.id,row.voltage,row.soc,row.demand,row.served,row.pv,row.battery,row.generator,row.imported,row.exported,Number(row.relay),row.owner].join(",")));
+  const url = URL.createObjectURL(new Blob([[columns.join(","),...rows].join("\r\n")], {type:"text/csv;charset=utf-8"}));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `cybercity-browser-${state.run.scenario.id}.csv`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 const gameButtons = [...document.querySelectorAll("button[data-game]")];
 for (const control of gameButtons) control.addEventListener("click", () => {
   gameMode = control.dataset.game;
@@ -461,7 +472,7 @@ elements["clear-events"].addEventListener("click", () => {
 markButton(nodeButtons, state.selected);
 setScenario("I");
 
-import("./city.mjs?v=living-grid-1").then(({ mountCity }) => {
+import("./city.mjs?v=living-grid-2").then(({ mountCity }) => {
   state.scene = mountCity(elements["city-canvas"], {
     onPick: selectNode,
     onStatus: ({ kind, message, assets }) => {

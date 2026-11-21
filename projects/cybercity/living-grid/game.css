@@ -1,4 +1,4 @@
-.masthead h1 span { display:block; color:var(--mint); font-size:.48em; letter-spacing:.01em; line-height:1.04; }
+.masthead h1 span { display:inline-block; color:var(--mint); font-size:.48em; letter-spacing:.01em; line-height:1.04; }
 .mode-strip { display:flex; gap:5px; align-items:center; flex-wrap:wrap; margin:0 0 14px; border-bottom:1px solid var(--border); }
 .mode-strip button { padding:9px 13px; margin-bottom:-1px; background:none; border:0; border-bottom:2px solid transparent; font-weight:600; font-size:.85rem; text-align:left; }
 .mode-strip [aria-pressed=true] { color:var(--mint); border-color:var(--mint); }
@@ -24,6 +24,7 @@
 .mission output { display:block; padding:7px; border:1px solid var(--border); border-radius:5px; color:var(--ink); }
 .mission output[data-result=pass] { border-color:#59977d; color:var(--mint); }
 .mission output[data-result=fail] { border-color:#a37b49; color:var(--gold); }
+#export-run { margin-top:8px; background:#14252a; border:1px solid var(--border); border-radius:5px; font-size:.72rem; padding:5px 7px; }
 @media (max-width:920px) {
  .workbench[data-game=explore] { grid-template-columns:minmax(0,1fr); }
  .workbench[data-game=explore] .inspector { grid-column:1; }

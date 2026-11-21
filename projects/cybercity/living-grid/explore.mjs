@@ -83,7 +83,7 @@ export function createExplorer(canvas, camera, orbit, changed, reducedMotion) {
     layer.dataset.camera = value;
     orbit.enabled = value === "orbit";
     if (value === "walk") { camera.position.set(2,2.7,37); yaw = Math.PI; pitch = -.045; look(); }
-    else if (value === "drone") { camera.position.set(42,38,56); yaw = -2.54; pitch = -.34; look(); }
+    else if (value === "drone") { camera.position.set(46,43,63); yaw = -2.48; pitch = -.51; look(); }
     else if (value === "tour") tourTime = 0;
   }
   function tick(now) {
