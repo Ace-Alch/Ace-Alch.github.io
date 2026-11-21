@@ -1,8 +1,6 @@
 (() => {
   let mounted;
   let pending;
-  const featured = ['Inertia-Control-Studio', 'circuit-lab', 'esp32-labs', 'smart-hospital-bed',
-    'hypersim-simulink-distribution', 'microgrid-prototype', 'bluetooth-hid', 'telegram-bot', 'MasterThesis2026', 'Sounder', 'LED-Matrix-Game', 'GPU-Accelerated-Satellite-Sim', 'CAD_FPV_Drone'];
   const element = (tag, className, text) => {
     const item = document.createElement(tag);
     if (className) item.className = className;
@@ -25,23 +23,18 @@
     if (!anchor || anchor === mounted || anchor === pending) return;
     pending = anchor;
     try {
-      const response = await fetch('/archive/projects.json?v=esp32-labs');
+      const response = await fetch('/archive/projects.json?v=engineering');
       if (!response.ok) throw Error('Project data unavailable');
-      const data = await response.json();
+      const records = await response.json();
       if (!anchor.isConnected || pending !== anchor) return;
-      const bySlug = new Map(data.map(project => [project.slug, project]));
-      const records = [...featured.map(slug => bySlug.get(slug)).filter(Boolean),
-        ...data.filter(project => !featured.includes(project.slug))];
       const section = element('section', 'section shell archive-section');
       section.id = 'project-archive';
       section.setAttribute('aria-labelledby', 'portfolio-project-heading');
-      section.innerHTML = '<div class="section-heading"><h2 id="portfolio-project-heading">Project collection</h2><span class="archive-count" role="status"></span></div><div class="archive-tools"><label>Find a project<input type="search" placeholder="Search projects, tools, or topics"></label><label>Field<select><option value="">All fields</option></select></label><label>Material<select data-material><option value="">All formats</option><option value="demo">Demos and examples</option><option value="case">Case studies</option></select></label></div><div class="archive-grid"></div><button class="button archive-more" type="button">Show all projects</button>';
+      section.innerHTML = '<div class="section-heading"><h2 id="portfolio-project-heading">Engineering projects</h2><span class="archive-count" role="status"></span></div><div class="archive-tools"><label>Search projects<input type="search" placeholder="Project, tool, or topic"></label><label>Discipline<select><option value="">All disciplines</option></select></label><label>Material<select data-material><option value="">All formats</option><option value="demo">Demos and examples</option><option value="case">Case studies</option></select></label></div><div class="archive-grid"></div>';
       const input = section.querySelector('input');
       const category = section.querySelector('select');
       const material = section.querySelector('[data-material]');
       const grid = section.querySelector('.archive-grid');
-      const more = section.querySelector('.archive-more');
-      more.remove();
       for (const name of [...new Set(records.map(project => project.category))].sort()) {
         category.add(new Option(name, name));
       }
