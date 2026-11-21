@@ -1,0 +1,547 @@
+.cc-monitor {
+  --cc-text: #e5f0f5;
+  --cc-muted: #a4b9c8;
+  --cc-border: #294252;
+  --cc-accent: #82e4cc;
+  --cc-field: #111f2a;
+  --cc-panel: #10212c;
+  --cc-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  min-width: 0;
+  color: var(--cc-text);
+  color-scheme: dark;
+}
+
+.cc-monitor *,
+.cc-monitor *::before,
+.cc-monitor *::after {
+  box-sizing: border-box;
+}
+
+.cc-monitor-head,
+.cc-monitor-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.cc-monitor-head {
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--cc-border);
+  margin-bottom: 1rem;
+}
+
+.cc-monitor-head h2,
+.cc-monitor-panel-head h3,
+.cc-monitor-head p,
+.cc-monitor-panel-head p {
+  margin: 0;
+}
+
+.cc-monitor .cc-monitor-kicker {
+  margin-bottom: 0.38rem;
+  color: var(--cc-accent);
+  font: 600 0.76rem/1.35 var(--cc-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cc-monitor-head h2 {
+  font-size: clamp(1.55rem, 3vw, 2.45rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.cc-monitor-head h2 + p,
+.cc-monitor-panel-head h3 + p {
+  margin-top: 0.5rem;
+  color: var(--cc-muted);
+  max-width: 64ch;
+  font-size: 0.91rem;
+  line-height: 1.48;
+}
+
+.cc-monitor-kind,
+.cc-monitor-count,
+.cc-monitor-clock {
+  border: 1px solid var(--cc-border);
+  border-radius: 0.42rem;
+  padding: 0.34rem 0.58rem;
+  color: var(--cc-accent);
+  font: 500 0.77rem/1.35 var(--cc-mono);
+  white-space: nowrap;
+}
+
+.cc-monitor-clock {
+  color: var(--cc-text);
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-monitor-scope-grid,
+.cc-monitor-analysis {
+  display: grid;
+  gap: 0.94rem;
+  align-items: start;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+}
+
+.cc-monitor-analysis {
+  margin-top: 0.94rem;
+}
+
+.cc-monitor-panel {
+  min-width: 0;
+  background: linear-gradient(155deg, var(--cc-panel), #0b161f 82%);
+  border: 1px solid var(--cc-border);
+  border-radius: 0.9rem;
+  padding: clamp(0.82rem, 2vw, 1.25rem);
+  box-shadow: 0 18px 45px #01081032;
+}
+
+.cc-monitor-panel-head h3 {
+  color: var(--cc-text);
+  font-size: clamp(1.08rem, 2vw, 1.31rem);
+  letter-spacing: -0.035em;
+}
+
+.cc-monitor-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+  margin: 0.95rem 0 0.45rem;
+}
+
+.cc-monitor button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cc-monitor button:focus-visible,
+.cc-monitor input:focus-visible,
+.cc-monitor summary:focus-visible,
+.cc-monitor a:focus-visible {
+  outline: 2px solid var(--cc-accent);
+  outline-offset: 3px;
+}
+
+.cc-monitor-switch button {
+  border: 1px solid var(--cc-border);
+  border-radius: 0.4rem;
+  padding: 0.43rem 0.58rem;
+  background: #0b1821;
+  color: var(--cc-muted);
+  font-size: 0.78rem;
+}
+
+.cc-monitor-switch button:hover,
+.cc-monitor-switch button[aria-pressed="true"] {
+  border-color: #519a8d;
+  background: #173435;
+  color: #cbfff1;
+}
+
+.cc-monitor-chart {
+  display: block;
+  width: 100%;
+  min-height: 8.7rem;
+  aspect-ratio: 780 / 264;
+  cursor: crosshair;
+}
+
+.cc-chart-area {
+  fill: #091822;
+}
+
+.cc-chart-band {
+  fill: #52db9820;
+}
+
+.cc-chart-grid path {
+  stroke: #354d5b;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.cc-monitor-chart text {
+  fill: #a3b9c9;
+  font: 600 13px var(--cc-mono);
+}
+
+.cc-monitor-chart .cc-chart-unit {
+  font-weight: 700;
+  fill: #d3e5ef;
+}
+
+.cc-chart-series path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.cc-chart-future {
+  fill: #0715208f;
+}
+
+.cc-chart-daq {
+  stroke: #8bd6d19a;
+  stroke-dasharray: 4 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.cc-monitor-chart .cc-chart-daq-caption {
+  fill: #abddd7;
+  font-size: 11px;
+}
+
+.cc-chart-cursor {
+  stroke: #fff;
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.cc-chart-markers circle {
+  stroke: #0a1420;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.cc-monitor-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem 0.7rem;
+  padding-top: 0.18rem;
+  min-height: 2.03rem;
+}
+
+.cc-monitor-chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.34rem;
+  color: var(--cc-muted);
+  font-size: 0.8rem;
+}
+
+.cc-monitor-chart-legend i,
+.cc-monitor-live button span::before {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--cc-series);
+}
+
+.cc-monitor-chart-legend b {
+  color: var(--cc-text);
+  font: 600 0.76rem var(--cc-mono);
+}
+
+.cc-monitor-range {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.72rem;
+  color: var(--cc-muted);
+  font-size: 0.77rem;
+  margin-top: 0.44rem;
+}
+
+.cc-monitor-range input {
+  width: 100%;
+  accent-color: var(--cc-accent);
+}
+
+.cc-monitor-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.68rem;
+}
+
+.cc-monitor-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-monitor-table th,
+.cc-monitor-table td {
+  padding: 0.54rem 0.36rem;
+  border-bottom: 1px solid #263d4b;
+}
+
+.cc-monitor-table thead th {
+  font-size: 0.76rem;
+  color: var(--cc-muted);
+  font-weight: 600;
+}
+
+.cc-monitor-table th:first-child {
+  padding-left: 0.15rem;
+  text-align: left;
+}
+
+.cc-monitor-table tbody td {
+  font: 500 0.77rem/1.4 var(--cc-mono);
+  white-space: nowrap;
+}
+
+.cc-monitor-live td {
+  max-width: 8ch;
+}
+
+.cc-monitor-live button {
+  display: grid;
+  gap: 0.12rem;
+  border: 0;
+  padding: 0.06rem 0.1rem;
+  border-radius: 0.22rem;
+  background: transparent;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.cc-monitor-live button span,
+.cc-monitor-live button small {
+  color: var(--cc-muted);
+  font-size: 0.68rem;
+}
+
+.cc-monitor-live button span {
+  color: var(--cc-text);
+  font: 700 0.79rem var(--cc-mono);
+}
+
+.cc-monitor-live button span::before {
+  content: "";
+  margin-right: 0.35rem;
+}
+
+.cc-monitor-live tr.is-selected {
+  background: #67ddc216;
+}
+
+.cc-monitor-live tr[data-outside-band] [data-voltage],
+.cc-monitor-live tr[data-unserved] [data-service] {
+  color: #ffaf9d;
+}
+
+.cc-monitor-flags dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.38rem;
+  margin: 0.82rem 0 0;
+}
+
+.cc-monitor-flags dl > div {
+  padding: 0.5rem 0.55rem;
+  border-radius: 0.42rem;
+  border: 1px solid #263d4b;
+  overflow-wrap: anywhere;
+}
+
+.cc-monitor-flags dt,
+.cc-monitor-result span,
+.cc-monitor-result small {
+  color: var(--cc-muted);
+  font-size: 0.74rem;
+}
+
+.cc-monitor-flags dd {
+  margin: 0.19rem 0 0;
+  color: var(--cc-text);
+  font: 500 0.8rem var(--cc-mono);
+}
+
+.cc-monitor-result {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.cc-monitor-result > div {
+  min-width: 0;
+  border-radius: 0.5rem;
+  border: 1px solid #28434d;
+  background: #0b1b24;
+  padding: 0.62rem;
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+}
+
+.cc-monitor-result strong {
+  color: var(--cc-text);
+  font-size: 1.23rem;
+}
+
+.cc-monitor-result .is-pass {
+  color: #8ce2c1;
+}
+
+.cc-monitor-result .is-fail {
+  color: #ffad9f;
+}
+
+.cc-monitor-kpis {
+  min-width: 15.7rem;
+}
+
+.cc-monitor-kpis th[scope="row"] {
+  font-size: 0.82rem;
+  font-weight: 560;
+}
+
+.cc-monitor-kpis th small {
+  display: block;
+  margin-top: 0.13rem;
+  color: var(--cc-muted);
+  font-size: 0.7rem;
+  font-weight: 430;
+}
+
+.cc-monitor-kpis td:last-child {
+  color: #b7d5fe;
+}
+
+.cc-monitor-detail {
+  margin-top: 0.8rem;
+  border: 1px solid #263d4b;
+  border-radius: 0.5rem;
+  padding: 0.66rem;
+}
+
+.cc-monitor-detail summary {
+  color: var(--cc-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.cc-monitor-detail summary span {
+  color: var(--cc-muted);
+  margin-left: 0.3rem;
+  font-size: 0.73rem;
+}
+
+.cc-monitor-criteria {
+  color: var(--cc-muted);
+  padding-left: 1.25rem;
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.cc-monitor-criteria > li + li {
+  margin-top: 0.22rem;
+}
+
+.cc-monitor-source,
+.cc-monitor-empty {
+  color: var(--cc-muted);
+  font-size: 0.81rem;
+  line-height: 1.48;
+}
+
+.cc-monitor-source {
+  margin: 0.78rem 0 0;
+  max-width: 68ch;
+}
+
+.cc-monitor-source a {
+  color: #b9d9ff;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+
+.cc-monitor-event-list {
+  list-style: none;
+  padding: 0.14rem;
+  margin: 0.72rem 0 0;
+  max-height: 28rem;
+  overflow-y: auto;
+  scrollbar-color: #456274 #0c1821;
+}
+
+.cc-monitor-event-list li + li {
+  margin-top: 0.32rem;
+}
+
+.cc-monitor-event-list button {
+  border: 1px solid #263d4b;
+  border-radius: 0.45rem;
+  background: #0d1b25;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 4.1rem 1fr;
+  gap: 0.5rem;
+  align-items: start;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.cc-monitor-event-list button:hover,
+.cc-monitor-event-list button[aria-current="time"] {
+  border-color: #57a994;
+  background: #183337;
+}
+
+.cc-monitor-event-list time {
+  color: var(--cc-muted);
+  font: 500 0.77rem/1.5 var(--cc-mono);
+}
+
+.cc-monitor-event-list button.is-past time {
+  color: var(--cc-accent);
+}
+
+.cc-monitor-event-list strong,
+.cc-monitor-event-list small {
+  overflow-wrap: anywhere;
+  display: block;
+}
+
+.cc-monitor-event-list strong {
+  font-size: 0.83rem;
+  font-weight: 650;
+}
+
+.cc-monitor-event-list small {
+  margin-top: 0.22rem;
+  color: var(--cc-muted);
+  font-size: 0.74rem;
+  line-height: 1.42;
+}
+
+@media (max-width: 820px) {
+  .cc-monitor-scope-grid,
+  .cc-monitor-analysis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 455px) {
+  .cc-monitor-head {
+    flex-wrap: wrap;
+    gap: 0.46rem;
+  }
+
+  .cc-monitor-live th,
+  .cc-monitor-live td {
+    padding-inline: 0.25rem;
+  }
+
+  .cc-monitor-chart {
+    min-height: 6rem;
+  }
+
+  .cc-monitor-chart text {
+    font-size: 19px;
+  }
+
+  .cc-monitor-chart .cc-chart-daq-caption {
+    font-size: 15px;
+  }
+}

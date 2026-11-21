@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberCity | Upgrade brief</title>
+<link rel="stylesheet" href="./studio.css">
+<body>
+<header class="topbar"><a href="./">The Living Grid</a><a href="./" class="wordmark">CYBER<span>CITY</span></a><nav aria-label="Sources"><a href="./credits.html">Credits</a><a href="/#projects">Portfolio</a></nav></header>
+<main class="main">
+  <section class="evidence">
+    <p class="eyebrow">Implementation prompt</p>
+    <h1 style="font-size:clamp(3rem,7vw,6rem)">Build The Living Grid</h1>
+    <p>Turn the CyberCity thesis demo into a cinematic and playable city. Preserve one electrical state across Explore, Engineering Sandbox, and Resilience Challenges. Let visitors approach from the air, walk up to equipment, operate it, and see how the city responds.</p>
+    <h2>World and play</h2>
+    <p>Design recognizable hospital, industrial, civic, and residential districts. Give each a reason to visit at street level. Use licensed, optimized models. Add traffic and pedestrians, vegetation, changing skies, night lighting, and optional audio. Drive lamps, pump flow, and factory equipment from delivered power. Make every electrical action readable in the world, the single-line diagram, and the diagnostics.</p>
+    <h2>Thesis traceability</h2>
+    <p>Use the published thesis and archived Simulink file as separate sources. Follow the 12 V architecture, independent generator branches, shared relay bus, district priorities, and six original 20-second schedules. Compare the published 11.6–12.8 V KPI band with the 11–13 V band in the archived model. Use the thesis band for the published comparison and identify the archive's separate recovery rule in technical documentation.</p>
+    <p>Map <code>Ruser</code> to load resistance, <code>S</code> to irradiance, <code>TempC</code> to PV temperature, <code>SW1–SW4</code> to battery, PV, demand and generator feeder, and <code>RPi_SW</code> to local MCU availability. Show <code>Vbus</code>, <code>SoC</code>, source and load power, <code>cmdRelay</code>, <code>reqFlag</code>, and <code>mainCmd</code>. Identify visual load shares and any simplified solver assumptions. Use raw Simulink traces for a validated replay only when the traces are available.</p>
+    <h2>Release and evaluation</h2>
+    <p>Keep the WebGL renderer and deterministic, client-side simulation on GitHub Pages for this release. The existing glTF pipeline works there, and GPU rendering remains on the visitor's device. Evaluate a renderer or hosting migration only against recorded load, compatibility, and performance measurements. Use a separate, versioned preview and keep the original entry live until release checks pass.</p>
+    <p>Test all six scenarios against the published KPI references. Test control changes, camera movement, object inspection, touch navigation, keyboard access, and graphics settings in the browser. Capture frame-time and initial-load results on representative devices. Add deeper world activity and a validated Simulink replay before promoting the complete game.</p>
+  </section>
+  <section class="evidence">
+    <h2>Preview operation</h2>
+    <p>Explore gives the scene more space and offers orbit, on-foot, drone, and flyover cameras. In Sandbox, use the electrical view to inspect donors and switch equipment. In Challenges, pick a scenario, test an intervention, run to 20 seconds, and read the criteria report.</p>
+    <p>The browser model uses reduced-order power balance. Published figures and KPI tables are available in Monitoring. This preview does not include raw Simulink replay data.</p>
+    <p>GitHub Pages stages paths by checksum. A reviewer can retire this preview with a revert of the preview commit. The existing CyberCity route is independent.</p>
+  </section>
+</main>
+</body>
+</html>
